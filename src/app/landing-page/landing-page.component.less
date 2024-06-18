@@ -1,0 +1,88 @@
+/* src/app/landing-page/landing-page.component.less */
+.landing-page {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(#e66465, #9198e5);
+  }
+  
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 20px;
+    
+  
+    @media (max-width: 850px) {
+      flex-direction: column;
+    }
+  }
+  
+  .repocleanup-title {
+    font-size: 4em;
+    margin: 20px;
+    @media (max-width: 600px) {
+      font-size: 3em;
+    }
+  }
+  
+  .custom-card {
+    width: 20vw;
+    min-width: 350px;
+    padding: 20px;
+    background: #e6ba8000;
+    // background: linear-gradient(to bottom right, #e15b64, #e6b980);
+    // box-shadow: 0 10px 20px rgba(225, 91, 100, 0.5);
+    transition: box-shadow 0.3s ease-in-out;
+    border: none;
+  
+    &:hover {
+      // box-shadow: 0 10px 20px rgba(230, 185, 128, 0.5);
+    }
+  }
+  
+  .content {
+    text-align: center;
+  
+    input[nz-input] {
+      margin-bottom: 20px;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.309); /* Custom border color */
+    //   border-radius: 8px; /* Custom border radius */
+    //   padding: 10px; /* Custom padding */
+    }
+  
+    button[nz-button] {
+      background: rgba(255, 255, 255, 0.309);
+      background: black;
+      border: none;
+
+      &:hover {
+        border: 1px solid rgba(255, 255, 255, 0.309);
+        background: rgba(0, 0, 0, 0.468);
+      }
+    }
+  }
+  
+  h2 {
+    margin-top: 30px;
+  }
+  
+  div {
+    margin: 0;
+    text-align: center;
+    margin-top: 50px;
+  }
+  
+  input[nz-input] {
+    width: 300px;
+    margin-right: 10px;
+  }
+  
+  button[nz-button] {
+    margin-top: 20px;
+  }
+  

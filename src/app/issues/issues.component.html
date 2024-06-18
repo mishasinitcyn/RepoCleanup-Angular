@@ -1,0 +1,25 @@
+<nz-page-header nzTitle="RepoCleanup"  nzSubtitle="Saving open-source projects">
+    <nz-page-header-extra>
+    <button nz-button nzType="primary" class="gradient-button"  (click)="detectSpam()">Detect Spam</button>
+    </nz-page-header-extra>
+</nz-page-header>
+
+<nz-alert *ngIf="showAlert" nzType="info" nzMessage="Spam detection in progress..." nzBanner class="loading-banner"></nz-alert>
+
+<div class="issues-page">
+  <div *ngIf="issues.length === 0" style="text-align: center;">
+    <h2>No issues found.</h2>
+  </div>
+  
+  <div *ngIf="issues.length > 0" style="padding: 20px;">
+    <nz-card *ngFor="let issue of issues" style="margin-bottom: 20px;">
+      <nz-card-meta nzTitle="{{ issue.title }}"></nz-card-meta>
+      <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
+      <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
+        <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+          {{ label.name }}
+        </nz-tag>
+      </div>
+    </nz-card>
+  </div>
+</div>
