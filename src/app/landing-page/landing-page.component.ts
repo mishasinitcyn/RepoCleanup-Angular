@@ -15,6 +15,7 @@ export class LandingPageComponent {
   repoUrl: string = '';
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
+  isDarkMode = true;
 
   constructor(private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService:SvgService) { }
 

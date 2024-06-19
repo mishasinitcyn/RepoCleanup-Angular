@@ -1,18 +1,30 @@
-<div class="landing-page">
+<!-- src/app/landing-page/landing-page.component.html -->
+<div class="landing-page" [class.dark-mode]="isDarkMode">
   <div class="svg-container">
     <ng-container *ngFor="let svg of svgs">
       <img [src]="svg.path" [ngStyle]="{ 'color': svg.color, 'top': svg.position.top, 'left': svg.position.left }" class="random-svg" />
     </ng-container>
   </div>
+  <div class="hero-section">
     <div class="container">
-      <h1 class="repocleanup-title">RepoCleanup</h1>
-  
-      <nz-card class="custom-card">
-        <div class="content">
-          <input nz-input [(ngModel)]="repoUrl" placeholder="Enter GitHub Repo URL" />
-          <button nz-button nzType="primary" (click)="fetchIssues()">Fetch Issues</button>
+      <div class="content">
+        <h1 class="repocleanup-title">Repo <br /> Cleanup</h1>
+        <p class="subtitle">Automatically identify and mark spam issues in your GitHub repos with the <span class="sparkles-text">power of ML.</span></p>
+        <div class="input-container">
+          <div class="hidden-squiggle1">
+            <app-squiggly1></app-squiggly1>
+          </div>
+          <div class="hidden-squiggle2">
+            <app-squiggly2></app-squiggly2>
+          </div>
+          <nz-card class="custom-card">
+            <div class="input-group">
+              <input nz-input [(ngModel)]="repoUrl" placeholder="Enter your GitHub repository URL" />
+              <button nz-button nzType="primary" (click)="fetchIssues()">Fetch Issues</button>
+            </div>
+          </nz-card>
         </div>
-      </nz-card>
+      </div>
     </div>
   </div>
-  
+</div>

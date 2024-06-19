@@ -20,12 +20,16 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
 import { SvgService } from './svg.service';
+import { Squiggly1Component } from './squiggly1/squiggly1.component';
+import { Squiggly2Component } from './squiggly2/squiggly2.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LandingPageComponent,
-    IssuesComponent
+    IssuesComponent,
+    Squiggly1Component,
+    Squiggly2Component
   ],
   imports: [
     BrowserModule,
