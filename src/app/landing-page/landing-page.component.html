@@ -1,9 +1,5 @@
-<!-- src/app/landing-page/landing-page.component.html -->
 <div class="landing-page" [class.dark-mode]="isDarkMode">
   <div class="svg-container">
-    <ng-container *ngFor="let svg of svgs">
-      <img [src]="svg.path" [ngStyle]="{ 'color': svg.color, 'top': svg.position.top, 'left': svg.position.left }" class="random-svg" />
-    </ng-container>
   </div>
   <div class="hero-section">
     <div class="container">

@@ -1,28 +1,28 @@
-// src/app/landing-page/landing-page.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { IssuesService } from '../issues.service';
-import {mockIssues} from './mockIssues'
-import {SvgService} from '../svg.service'
+import { mockIssues } from './mockIssues';
+import { SvgService } from '../svg.service';
 
 @Component({
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.less']
 })
-export class LandingPageComponent {
+export class LandingPageComponent implements OnInit {
   repoUrl: string = '';
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
   isDarkMode = true;
 
-  constructor(private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService:SvgService) { }
+  constructor(private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService: SvgService) { }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void { }
 
-  fetchIssues_real(): void {
+  fetchIssues(): void {
+    console.log('fetchIssues')
+    console.log(this.repoUrl)
     if (!this.repoUrl) {
       return;
     }
@@ -33,12 +33,11 @@ export class LandingPageComponent {
       return;
     }
 
-    const apiUrl = `https://api.github.com/repos/${repoPath}/issues`;
+    const [owner, repo] = repoPath.split('/');
 
-    this.http.get(apiUrl).subscribe(
+    this.issuesService.fetchIssues(owner, repo).subscribe(
       data => {
-        console.log(data)
-        this.issuesService.setIssues(data as any[]);
+        this.issuesService.setIssues(data);
         this.router.navigate(['/issues']);
       },
       error => alert('Error fetching issues')
@@ -50,7 +49,7 @@ export class LandingPageComponent {
     return match ? match[1] : null;
   }
 
-  fetchIssues(): void {
+  fetchIssues_mock(): void {
     // Use mock issues data instead of making an actual API call
     this.issuesService.setIssues(this.mockIssues);
     this.router.navigate(['/issues']);

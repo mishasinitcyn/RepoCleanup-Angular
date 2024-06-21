@@ -35,7 +35,9 @@
   
   .nz-card-meta-title {
     color: black;
+    font-size: 2rem; /* Increase the font size to make the titles huge */
   }
+  
   
   .nz-card-meta-description {
     color: #333; 
@@ -56,6 +58,20 @@
     // background: linear-gradient(to bottom, #000000, #9198e5);
     display: block;
     padding: 20px;
+    
+
+    // Dark mode grid overlay
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -9;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
+    background-size: 14px 24px;
+    mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
+  }
   }
   
   .gradient-button {
