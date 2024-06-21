@@ -1,6 +1,5 @@
-<!-- src/app/issues/issues.component.html -->
-<ng-template #githubNotification let-nzData="nzData" nzType="blank" type="blank">
-  <div class="ant-notification-notice-content" type="blank">
+<ng-template #githubNotification let-nzData="nzData">
+  <div class="ant-notification-notice-content">
     <div class="ant-notification-notice-with-icon">
       <span class="ant-notification-notice-icon">
         <span nz-icon nzType="github"></span>
@@ -15,26 +14,33 @@
 
 <nz-page-header nzTitle="RepoCleanup" nzSubtitle="Saving open-source projects">
   <nz-page-header-extra>
-  <button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button>
   </nz-page-header-extra>
 </nz-page-header>
+<span nz-icon nzType="github" nzTheme="outline" class="github-icon"></span>
 
-<nz-alert *ngIf="showAlert" nzType="info" nzMessage="Spam detection in progress..." nzBanner class="loading-banner"></nz-alert>
+<nz-flex [nzJustify]="'center'" [nzAlign]="'center'" [nzGap]="'middle'">
+  <div><button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button>
+  </div>
+</nz-flex>
+<!-- <nz-alert *ngIf="showAlert" nzType="info" nzMessage="Spam detection in progress..." nzBanner class="loading-banner"></nz-alert> -->
 
 <div class="issues-page">
-<div *ngIf="issues.length === 0" style="text-align: center;">
-  <h2>No issues found.</h2>
-</div>
+  <div *ngIf="issues.length === 0" style="text-align: center;">
+    <h2>No issues found.</h2>
+  </div>
 
-<div *ngIf="issues.length > 0" style="padding: 20px;">
-  <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" style="margin-bottom: 20px;">
-    <h1>{{ issue.title }}</h1>
-    <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
-    <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
-      <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
-        {{ label.name }}
-      </nz-tag>
-    </div>
-  </nz-card>
-</div>
+  <div *ngIf="issues.length > 0" style="padding: 20px;">
+    <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showRemoveSpamModal(issue) : showAddSpamModal(issue)" style="margin-bottom: 20px;">
+      <h1>{{ issue.title }}</h1>
+      <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
+      <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
+        <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+          {{ label.name }}
+        </nz-tag>
+      </div>
+    </nz-card>
+  </div>
+  
+
+  <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div>
 </div>

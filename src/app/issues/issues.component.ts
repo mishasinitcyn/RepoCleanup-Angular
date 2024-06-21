@@ -1,8 +1,9 @@
-// src/app/issues/issues.component.ts
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { IssuesService } from '../issues.service';
-import { IssueTag } from '../interface';
+import { IssueLabel, SpamLabel } from '../interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-issues',
@@ -13,11 +14,13 @@ export class IssuesComponent implements OnInit {
   @ViewChild('githubNotification', { static: true }) githubNotification!: TemplateRef<{}>;
 
   issues: any[] = [];
-  showAlert: boolean = false;
+  showAlert = false;
 
   constructor(
     private issuesService: IssuesService,
-    private notification: NzNotificationService
+    private notification: NzNotificationService,
+    private modal: NzModalService,
+    private message: NzMessageService
   ) {}
 
   ngOnInit(): void {
@@ -30,14 +33,13 @@ export class IssuesComponent implements OnInit {
       nzData: { title, content },
       nzPlacement: 'bottomRight',
       nzCloseIcon: '',
-    },
-  );
+    });
   }
 
   detectSpam(): void {
     this.showAlert = true;
     this.issuesService.sendIssues(this.issues).subscribe(
-      (response: IssueTag[]) => {
+      (response: IssueLabel[]) => {
         this.showAlert = false;
         console.log(response);
         this.updateIssuesWithSpamLabels(response);
@@ -49,24 +51,14 @@ export class IssuesComponent implements OnInit {
     );
   }
 
-  updateIssuesWithSpamLabels(issueTags: IssueTag[]): void {
-    const spamLabel = {
-      id: 7057394422,
-      node_id: "LA_kwDOMEfBEs8AAAABpKdK9g",
-      url: "https://api.github.com/repos/mishasinitcyn/RepoCleanup-backend/labels/ml",
-      name: "spam",
-      color: "FA4CAB",
-      default: false,
-      description: ""
-    };
-
-    issueTags.forEach(issueTag => {
-      if (issueTag.label.toLowerCase() === 'spam') {
-        const issue = this.issues.find(issue => issue.id === issueTag.id);
+  updateIssuesWithSpamLabels(IssueLabels: IssueLabel[]): void {
+    IssueLabels.forEach(IssueLabel => {
+      if (IssueLabel.label.toLowerCase() === 'spam') {
+        const issue = this.issues.find(issue => issue.id === IssueLabel.id);
         if (issue) {
           issue.labels = issue.labels || [];
           if (!issue.labels.some((label: any) => label.name === 'spam')) {
-            issue.labels.push(spamLabel);
+            issue.labels.push(SpamLabel);
           }
         }
       }
@@ -95,5 +87,58 @@ export class IssuesComponent implements OnInit {
 
   hasSpamLabel(issue: any): boolean {
     return issue.labels.some((label: any) => label.name === 'spam');
+  }
+
+  showRemoveSpamModal(issue: any): void {
+    this.modal.confirm({
+      nzTitle: 'Remove spam label?',
+      nzOnOk: () => this.removeSpamLabel(issue),
+      nzOnCancel: () => console.log('Cancel'),
+      nzNoAnimation: true,
+      nzOkText: 'Yes',
+      nzCancelText: 'No',
+      nzBodyStyle: {
+        backgroundColor: 'black',
+        color: 'white'
+      },
+    });
+  }
+
+  removeSpamLabel(issue: any): void {
+    issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
+    this.sortIssues();
+    // this.message.success('Spam label removed successfully');
+    this.issuesService.updateIssue(issue).subscribe(
+      () => console.log('Issue updated successfully'),
+      (error) => console.error('Error updating issue:', error)
+    );
+  }
+
+  showAddSpamModal(issue: any): void {
+    this.modal.confirm({
+      nzTitle: 'Is this spam?',
+      nzOnOk: () => this.addSpamLabel(issue),
+      nzOnCancel: () => console.log('Cancel'),
+      nzNoAnimation: true,
+      nzOkText: 'Yes',
+      nzCancelText: 'No',
+      nzBodyStyle: {
+        backgroundColor: 'black',
+        color: 'white'
+      },
+    });
+  }
+
+  addSpamLabel(issue: any): void {
+    issue.labels = issue.labels || [];
+    if (!issue.labels.some((label: any) => label.name === 'spam')) {
+      issue.labels.push(SpamLabel);
+      this.sortIssues();
+      // this.message.success('Spam label added successfully');
+      this.issuesService.updateIssue(issue).subscribe(
+        () => console.log('Issue updated successfully'),
+        (error) => console.error('Error updating issue:', error)
+      );
+    }
   }
 }

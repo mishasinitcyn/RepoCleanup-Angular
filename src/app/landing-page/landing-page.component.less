@@ -16,7 +16,7 @@
     z-index: -10;
     height: 100%;
     width: 100%;
-    background: radial-gradient(125% 125% at 50% 10%, #000 40%, #63e 100%);
+    background: radial-gradient(125% 125% at 50% 10%, #000000 40%, #63e 100%);
     display: none; /* hidden by default */
   }
 
@@ -35,18 +35,16 @@
 
   &.dark-mode {
     &::before {
-      display: block; /* show background in dark mode */
+      display: block;
     }
   }
-  .header {
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 10px;
-  }
+
 
   .github-icon {
-    margin: 20px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 40px;
     font-size: 50px;
     // color: #000;
   }
@@ -97,12 +95,6 @@
     }
   }
 
-  .sparkles-text {
-    color: #A07CFE;
-    background-image: linear-gradient(45deg, #A07CFE, #4EB6C1);
-    -webkit-background-clip: text;
-    color: transparent;
-  }
 
   .input-container {
     position: relative;
@@ -165,14 +157,6 @@
           background: rgb(255, 255, 255);
           border: none;
           color: rgb(41, 37, 36);
-          // border-radius: 6px;
-          // border-radius: 0.25rem;
-          // padding: 0.5rem 1rem;
-
-          // &:hover {
-          //   border: 1px solid rgba(0, 0, 0, 0.1);
-          //   background: rgba(0, 0, 0, 0.2);
-          // }
         }
       }
     }

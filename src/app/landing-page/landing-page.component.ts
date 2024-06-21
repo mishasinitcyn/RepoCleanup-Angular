@@ -51,7 +51,6 @@ export class LandingPageComponent implements OnInit {
   }
 
   fetchIssues_mock(): void {
-    // Use mock issues data instead of making an actual API call
     this.issuesService.setIssues(this.mockIssues);
     this.router.navigate(['/issues']);
   }

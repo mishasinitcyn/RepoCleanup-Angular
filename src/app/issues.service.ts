@@ -2,7 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IssueTag } from './interface';
+import { IssueLabel } from './interface';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +14,8 @@ export class IssuesService {
 
   constructor(private http: HttpClient) { }
 
-  sendIssues(issues: any[]): Observable<IssueTag[]> {
-    return this.http.post<IssueTag[]>(`${this.apiUrl}/classify_spam`, issues);
+  sendIssues(issues: any[]): Observable<IssueLabel[]> {
+    return this.http.post<IssueLabel[]>(`${this.apiUrl}/classify_spam`, issues);
   }
 
   setIssues(issues: any[]): void {
@@ -34,5 +34,9 @@ export class IssuesService {
     };
     console.log("SENDING API FOR ISSUES", url, {params})
     return this.http.get<any[]>(url, { params });
+  }
+
+  updateIssue(issue: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${issue.id}`, issue);
   }
 }

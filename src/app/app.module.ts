@@ -19,6 +19,10 @@ import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzNotificationModule } from 'ng-zorro-antd/notification';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzSpaceModule } from 'ng-zorro-antd/space';
+import { NzFlexModule } from 'ng-zorro-antd/flex';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { GithubOutline } from '@ant-design/icons-angular/icons';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
@@ -47,7 +51,11 @@ import { Squiggly2Component } from './squiggly2/squiggly2.component';
     NzPageHeaderModule,
     NzAlertModule,
     NzNotificationModule,
+    NzSpaceModule,
+    NzFlexModule,
+    NzSpinModule,
     NzIconModule.forRoot([GithubOutline]),
+    NzModalModule,
     MarkdownModule.forRoot(),
     RouterModule
   ],
