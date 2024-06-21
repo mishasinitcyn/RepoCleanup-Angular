@@ -29,10 +29,10 @@ export class IssuesService {
   fetchIssues(owner: string, repo: string): Observable<any[]> {
     const url = `${this.githubApiUrl}/${owner}/${repo}/issues`;
     const params = {
-      per_page: '60',
+      per_page: '3',
       state: 'open'
     };
-
+    console.log("SENDING API FOR ISSUES", url, {params})
     return this.http.get<any[]>(url, { params });
   }
 }

@@ -17,6 +17,9 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzPageHeaderModule } from 'ng-zorro-antd/page-header';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { NzNotificationModule } from 'ng-zorro-antd/notification';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { GithubOutline } from '@ant-design/icons-angular/icons';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
 import { SvgService } from './svg.service';
@@ -43,6 +46,8 @@ import { Squiggly2Component } from './squiggly2/squiggly2.component';
     NzTagModule,
     NzPageHeaderModule,
     NzAlertModule,
+    NzNotificationModule,
+    NzIconModule.forRoot([GithubOutline]),
     MarkdownModule.forRoot(),
     RouterModule
   ],

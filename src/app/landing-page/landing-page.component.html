@@ -1,4 +1,7 @@
 <div class="landing-page" [class.dark-mode]="isDarkMode">
+  <div class="header">
+    <span nz-icon nzType="github" nzTheme="outline" class="github-icon"></span>
+  </div>
   <div class="svg-container">
   </div>
   <div class="hero-section">
@@ -16,7 +19,7 @@
           <nz-card class="custom-card">
             <div class="input-group">
               <input nz-input [(ngModel)]="repoUrl" placeholder="Enter your GitHub repository URL" />
-              <button nz-button nzType="primary" (click)="fetchIssues()">Fetch Issues</button>
+              <button nz-button nzType="primary" (click)="fetchIssues_mock()">Fetch Issues</button>
             </div>
           </nz-card>
         </div>

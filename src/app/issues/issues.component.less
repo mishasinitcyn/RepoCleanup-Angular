@@ -1,49 +1,54 @@
-
+/* src/app/issues/issues.component.less */
 :host {
-    
-  }
-  
   nz-page-header {
     margin-bottom: 20px;
   }
-  
+
   nz-page-header-extra {
     display: flex;
     justify-content: flex-end;
   }
-  
+
   nz-alert {
     margin-bottom: 20px;
   }
-  
+
   nz-card {
     margin-bottom: 20px;
-    background-color: rgba(0,0,0 , 0.8);
+    background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    // border-radius: 6px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  nz-tag {
-    margin-right: 8px;
-  }
-  
-  nz-card-meta {
-    color: black; 
-  }
-  
-  .nz-card-meta-title {
-    color: black;
-    font-size: 2rem; /* Increase the font size to make the titles huge */
-  }
-  
-  
-  .nz-card-meta-description {
-    color: #333; 
+
+    &.spam-issue {
+      // border: 2px solid red; /* Red border for spam issues */
+      // background: radial-gradient(#e66465, #9198e5);
+      // background: radial-gradient(#e66465, #cc4c6c);
+      background-color: #ce394d;
+      // border: 1px solid rgb(255, 255, 255);
+      // box-shadow: 0 6px 20px rgba(255, 0, 85, 0.5);
+
+      &:hover {
+        background: radial-gradient(#e66485, #ce394d);
+        box-shadow: 0 6px 20px rgba(255, 0, 85, 0.5);
+      }
+    }
   }
 
-  .loading-banner{
+  nz-card-meta {
+    color: black;
+  }
+
+  .nz-card-meta-title {
+    color: black;
+    font-size: 2rem;
+  }
+
+  .nz-card-meta-description {
+    color: #333;
+  }
+
+  .loading-banner {
     width: 80vw;
     margin: auto;
   }
@@ -55,32 +60,29 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    // background: linear-gradient(to bottom, #000000, #9198e5);
     display: block;
     padding: 20px;
-    
 
-    // Dark mode grid overlay
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -9;
-    height: 100%;
-    width: 100%;
-    background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
-    background-size: 14px 24px;
-    mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -9;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
+      background-size: 14px 24px;
+      mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
+    }
   }
-  }
-  
+
   .gradient-button {
     background: linear-gradient(to right, #4f54a6, #2595ff);
     color: white;
-    // border: 1px solid linear-gradient(to right, #4f54a6, #2595ff);
     border: none;
     border-radius: 6px;
-  
+    
+
     &:hover {
       box-shadow: 0 6px 20px rgba(0, 118, 255, 0.5);
     }
@@ -88,5 +90,6 @@
 
   nz-tag {
     margin-right: 8px;
-    background-color: rgba(0, 0, 0, 0.1); 
+    // background-color: rgba(0, 0, 0, 0.1);
   }
+}

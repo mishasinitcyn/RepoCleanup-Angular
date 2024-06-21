@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+// src/app/issues/issues.component.ts
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { IssuesService } from '../issues.service';
 import { IssueTag } from '../interface';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 
 @Component({
   selector: 'app-issues',
@@ -8,13 +10,28 @@ import { IssueTag } from '../interface';
   styleUrls: ['./issues.component.less']
 })
 export class IssuesComponent implements OnInit {
+  @ViewChild('githubNotification', { static: true }) githubNotification!: TemplateRef<{}>;
+
   issues: any[] = [];
   showAlert: boolean = false;
 
-  constructor(private issuesService: IssuesService) { }
+  constructor(
+    private issuesService: IssuesService,
+    private notification: NzNotificationService
+  ) {}
 
   ngOnInit(): void {
     this.issues = this.issuesService.getIssues();
+    this.showNotification('Spam Detection', 'Spam detection in progress...');
+  }
+
+  showNotification(title: string, content: string): void {
+    this.notification.template(this.githubNotification, {
+      nzData: { title, content },
+      nzPlacement: 'bottomRight',
+      nzCloseIcon: '',
+    },
+  );
   }
 
   detectSpam(): void {
@@ -24,6 +41,7 @@ export class IssuesComponent implements OnInit {
         this.showAlert = false;
         console.log(response);
         this.updateIssuesWithSpamLabels(response);
+        this.sortIssues();
       },
       (error) => {
         console.error('Error sending issues:', error);
@@ -42,12 +60,9 @@ export class IssuesComponent implements OnInit {
       description: ""
     };
 
-    issueTags.forEach(tag => {
-      console.log(tag)
-      if (tag.label === 'spam') {
-        console.log('searching for', tag.id, 'in issues')
-        const issue = this.issues.find(issue => issue.id === tag.id);
-        console.log(issue)
+    issueTags.forEach(issueTag => {
+      if (issueTag.label.toLowerCase() === 'spam') {
+        const issue = this.issues.find(issue => issue.id === issueTag.id);
         if (issue) {
           issue.labels = issue.labels || [];
           if (!issue.labels.some((label: any) => label.name === 'spam')) {
@@ -56,7 +71,14 @@ export class IssuesComponent implements OnInit {
         }
       }
     });
-    console.log(this.issues)
+  }
+
+  sortIssues(): void {
+    this.issues.sort((a, b) => {
+      const aIsSpam = a.labels.some((label: any) => label.name === 'spam');
+      const bIsSpam = b.labels.some((label: any) => label.name === 'spam');
+      return (aIsSpam === bIsSpam) ? 0 : aIsSpam ? -1 : 1;
+    });
   }
 
   getLabelColor(label: string): string {
@@ -69,5 +91,9 @@ export class IssuesComponent implements OnInit {
       'suggestion': 'yellow'
     };
     return colorMapping[label.toLowerCase()] || 'default';
+  }
+
+  hasSpamLabel(issue: any): boolean {
+    return issue.labels.some((label: any) => label.name === 'spam');
   }
 }
