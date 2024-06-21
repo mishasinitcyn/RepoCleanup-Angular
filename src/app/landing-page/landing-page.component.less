@@ -18,6 +18,7 @@
     width: 100%;
     background: radial-gradient(125% 125% at 50% 10%, #000000 40%, #63e 100%);
     display: none; /* hidden by default */
+    animation: smoothGradientAnimation 20s ease-in-out infinite;
   }
 
   // Dark mode grid overlay
@@ -61,6 +62,7 @@
   gap: 1.5rem;
 
   .repocleanup-title {
+    position: relative;
     background: linear-gradient(to bottom right, rgb(255, 255, 255) 30%, rgba(0, 0, 0, 0.6));
     background-clip: text;
     -webkit-background-clip: text;
@@ -79,9 +81,50 @@
     @media (min-width: 1024px) {
       font-size: 8rem;
     }
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: sparkle 4s infinite;
+      opacity: 0;
+    }
+
+    &::before {
+      width: 10px;
+      height: 10px;
+      top: 20%;
+      left: 5%;
+    }
+
+    &::after {
+      width: 6px;
+      height: 6px;
+      top: 60%;
+      right: 10%;
+      animation-delay: 1s;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: sparkle 4s infinite 2s;
+      top: 40%;
+      left: 50%;
+    }
 
     &.dark-mode {
       background: linear-gradient(to bottom right, white, rgba(255, 255, 255, 0.4));
+      &::before,
+      &::after,
+      .sparkle {
+        background: rgba(255, 255, 255, 0.8);
+      }
     }
   }
 
@@ -162,3 +205,19 @@
     }
   }
 }
+
+@keyframes smoothGradientAnimation {
+  0%, 100% {
+    background: radial-gradient(125% 125% at 50% 10%, #000000 40%, #63e 100%);
+  }
+  25% {
+    background: radial-gradient(125% 125% at 51% 11%, #000000 40%, #64e 100%);
+  }
+  50% {
+    background: radial-gradient(125% 125% at 52% 12%, #000000 40%, #65e 100%);
+  }
+  75% {
+    background: radial-gradient(125% 125% at 51% 11%, #000000 40%, #64e 100%);
+  }
+}
+

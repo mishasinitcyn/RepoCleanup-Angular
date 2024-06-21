@@ -31,8 +31,8 @@ export class IssuesComponent implements OnInit {
   showNotification(title: string, content: string): void {
     this.notification.template(this.githubNotification, {
       nzData: { title, content },
-      nzPlacement: 'bottomRight',
-      nzCloseIcon: '',
+      nzPlacement: 'topRight',
+      nzCloseIcon: undefined,
     });
   }
 

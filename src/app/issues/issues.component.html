@@ -19,8 +19,8 @@
 <span nz-icon nzType="github" nzTheme="outline" class="github-icon"></span>
 
 <nz-flex [nzJustify]="'center'" [nzAlign]="'center'" [nzGap]="'middle'">
-  <div><button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button>
-  </div>
+  <div *ngIf="!showAlert"><button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button></div>
+  <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div>
 </nz-flex>
 <!-- <nz-alert *ngIf="showAlert" nzType="info" nzMessage="Spam detection in progress..." nzBanner class="loading-banner"></nz-alert> -->
 
@@ -42,5 +42,4 @@
   </div>
   
 
-  <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div>
 </div>
