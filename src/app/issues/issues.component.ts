@@ -4,6 +4,7 @@ import { IssueLabel, SpamLabel } from '../interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 @Component({
   selector: 'app-issues',
@@ -20,7 +21,8 @@ export class IssuesComponent implements OnInit {
     private issuesService: IssuesService,
     private notification: NzNotificationService,
     private modal: NzModalService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private clipboard: Clipboard
   ) {}
 
   ngOnInit(): void {
@@ -37,6 +39,9 @@ export class IssuesComponent implements OnInit {
   }
 
   detectSpam(): void {
+    if (!this.issues.length){
+      return
+    }
     this.showAlert = true;
     this.issuesService.sendIssues(this.issues).subscribe(
       (response: IssueLabel[]) => {
@@ -140,5 +145,32 @@ export class IssuesComponent implements OnInit {
         (error) => console.error('Error updating issue:', error)
       );
     }
+  }
+
+  showCleanupReport(): void {
+    const spamIssues = this.issues.filter(issue => this.hasSpamLabel(issue));
+    const reportContent = spamIssues.map(issue => `${issue.id}`).join(',');
+
+    this.modal.create({
+      nzTitle: 'Cleanup Report',
+      nzContent: `
+        <p>Issues marked as spam:</p>
+        <textarea readonly rows="10" style="width: 100%;">${reportContent}</textarea>
+      `,
+      nzFooter: [
+        {
+          label: 'Copy to Clipboard',
+          onClick: () => {
+            this.clipboard.copy(reportContent);
+            this.message.success('Report copied to clipboard');
+          }
+        },
+        // {
+        //   label: 'Close',
+        //   onClick: () => {}
+        // }
+      ],
+      nzWidth: 600,
+    });
   }
 }

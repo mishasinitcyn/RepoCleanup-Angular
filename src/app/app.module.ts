@@ -23,6 +23,9 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { NzMessageModule } from 'ng-zorro-antd/message';
+import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { GithubOutline } from '@ant-design/icons-angular/icons';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
@@ -56,6 +59,9 @@ import { Squiggly2Component } from './squiggly2/squiggly2.component';
     NzSpinModule,
     NzIconModule.forRoot([GithubOutline]),
     NzModalModule,
+    NzTypographyModule,
+    ClipboardModule,
+    NzMessageModule,
     MarkdownModule.forRoot(),
     RouterModule
   ],

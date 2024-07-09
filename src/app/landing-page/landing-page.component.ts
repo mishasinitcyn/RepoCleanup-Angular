@@ -25,6 +25,7 @@ export class LandingPageComponent implements OnInit {
     console.log('fetchIssues')
     console.log(this.repoUrl)
     if (!this.repoUrl) {
+      this.fetchIssues_mock();
       return;
     }
 
