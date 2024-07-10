@@ -35,14 +35,13 @@ export class IssuesService {
       per_page: '30',
       state: 'open'
     };
-    console.log("SENDING API FOR ISSUES", url, {params})
     return this.http.get<any[]>(url, { params });
   }
 
   fetchIssues(owner: string, repo: string): Observable<any[]> {
     return this.authService.getToken().pipe(
       switchMap(token => {
-        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
         return this.http.get<any[]>(`${this.apiUrl}/github/issues/${owner}/${repo}`, { headers });
       })
     );

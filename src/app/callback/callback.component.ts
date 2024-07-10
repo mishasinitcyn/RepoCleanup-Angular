@@ -19,16 +19,13 @@ export class CallbackComponent implements OnInit {
         this.authService.handleCallback(code).subscribe(
           response => {
             this.authService.setToken(response.access_token);
-            this.router.navigate(['/issues']);
           },
           error => {
             console.error('Authentication failed', error);
-            this.router.navigate(['/landing']);
           }
         );
-      } else {
-        this.router.navigate(['/landing']);
       }
+      this.router.navigate(['/landing']);
     });
   }
 }

@@ -11,11 +11,7 @@ import { AuthService } from '../auth.service';
   styleUrls: ['./landing-page.component.less']
 })
 export class LandingPageComponent {
-  constructor(private authService: AuthService, private http: HttpClient, private router: Router, private issuesService: IssuesService) { }
-
-  login() {
-    this.authService.login();
-  }
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) { }
   repoUrl: string = '';
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
@@ -24,14 +20,11 @@ export class LandingPageComponent {
 
   ngOnInit(): void { }
 
-  fetchIssues(): void {
-    console.log('fetchIssues')
-    console.log(this.repoUrl)
-    if (!this.repoUrl) {
-      this.fetchIssues_mock();
-      return;
-    }
+  login() {
+    this.authService.login();
+  }
 
+  fetchIssues(isGuest: boolean = false) {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
       alert('Invalid GitHub URL');

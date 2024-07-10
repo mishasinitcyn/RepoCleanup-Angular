@@ -4,6 +4,7 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { environment } from './src/environments/environment';
 import AppServerModule from './src/main.server';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -20,8 +21,6 @@ export function app(): express.Express {
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
-
-  // Parse JSON bodies
   server.use(express.json());
 
   // GitHub OAuth callback endpoint
@@ -44,6 +43,7 @@ export function app(): express.Express {
       res.status(500).json({ error: 'Failed to authenticate' });
     }
   });
+  
 
   // GitHub API proxy
   server.get('/api/github/issues/:owner/:repo', async (req, res) => {
@@ -51,12 +51,24 @@ export function app(): express.Express {
     const token = req.headers.authorization?.split(' ')[1];
     
     try {
+      const params = {
+        per_page: token ? '30' : '10',
+        state: 'open'
+      };
+
+      const headers: any = {
+        Accept: 'application/vnd.github.v3+json'
+      };
+
+      if (token) {
+        headers.Authorization = `token ${token}`;
+      }
+
       const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/issues`, {
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: 'application/vnd.github.v3+json'
-        }
+        params,
+        headers
       });
+
       res.json(response.data);
     } catch (error: any) {
       console.error('GitHub API error:', error);
@@ -64,12 +76,12 @@ export function app(): express.Express {
     }
   });
 
-  // Proxy requests to your FastAPI backend
+  // Proxy requests to FastAPI backend
   server.use('/api', createProxyMiddleware({
-    target: 'http://localhost:8000', // Your FastAPI server address
+    target: environment.fastApiUrl,
     changeOrigin: true,
     pathRewrite: {
-      '^/api/classify_spam': '/classify_spam', // Rewrite path if necessary
+      '^/api/classify_spam': '/classify_spam',
       '^/api/issues': '/issues'
     }
   }));
