@@ -1,21 +1,25 @@
 // src/app/issues.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IssueLabel } from './interface';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { AuthService } from './auth.service';
+import { switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IssuesService {
-  private apiUrl = 'http://localhost:8000';
-  private githubApiUrl = 'https://api.github.com/repos';
+  private fastApiUrl = 'http://localhost:8000';
+  private apiUrl = environment.apiUrl;
+  private githubApiUrl = 'https://api.github.com';
   private issues: any[] = [];
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
-  sendIssues(issues: any[]): Observable<IssueLabel[]> {
-    return this.http.post<IssueLabel[]>(`${this.apiUrl}/classify_spam`, issues);
+  sendIssues(issues: any[]): Observable<any> {
+    return this.http.post(`${this.fastApiUrl}/classify_spam`, issues);
   }
 
   setIssues(issues: any[]): void {
@@ -26,7 +30,7 @@ export class IssuesService {
     return this.issues;
   }
 
-  fetchIssues(owner: string, repo: string): Observable<any[]> {
+  fetchIssues_(owner: string, repo: string): Observable<any[]> {
     const url = `${this.githubApiUrl}/${owner}/${repo}/issues`;
     const params = {
       per_page: '30',
@@ -36,7 +40,16 @@ export class IssuesService {
     return this.http.get<any[]>(url, { params });
   }
 
-  updateIssue(issue: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${issue.id}`, issue);
+  fetchIssues(owner: string, repo: string): Observable<any[]> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.get<any[]>(`${this.apiUrl}/github/issues/${owner}/${repo}`, { headers });
+      })
+    );
   }
+
+  // updateIssue(issue: any): Observable<any> {
+  //   return this.http.patch(`${this.apiUrl}/issues/${issue.id}`, issue);
+  // }
 }

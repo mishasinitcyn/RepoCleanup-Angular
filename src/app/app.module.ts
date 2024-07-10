@@ -32,6 +32,7 @@ import {MarkdownModule} from 'ngx-markdown'
 import { SvgService } from './svg.service';
 import { Squiggly1Component } from './squiggly1/squiggly1.component';
 import { Squiggly2Component } from './squiggly2/squiggly2.component';
+import { CallbackComponent } from './callback/callback.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +40,8 @@ import { Squiggly2Component } from './squiggly2/squiggly2.component';
     LandingPageComponent,
     IssuesComponent,
     Squiggly1Component,
-    Squiggly2Component
+    Squiggly2Component,
+    CallbackComponent
   ],
   imports: [
     BrowserModule,

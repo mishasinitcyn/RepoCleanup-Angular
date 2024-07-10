@@ -113,10 +113,10 @@ export class IssuesComponent implements OnInit {
     issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
     this.sortIssues();
     // this.message.success('Spam label removed successfully');
-    this.issuesService.updateIssue(issue).subscribe(
-      () => console.log('Issue updated successfully'),
-      (error) => console.error('Error updating issue:', error)
-    );
+    // this.issuesService.updateIssue(issue).subscribe(
+    //   () => console.log('Issue updated successfully'),
+    //   (error) => console.error('Error updating issue:', error)
+    // );
   }
 
   showAddSpamModal(issue: any): void {
@@ -140,10 +140,10 @@ export class IssuesComponent implements OnInit {
       issue.labels.push(SpamLabel);
       this.sortIssues();
       // this.message.success('Spam label added successfully');
-      this.issuesService.updateIssue(issue).subscribe(
-        () => console.log('Issue updated successfully'),
-        (error) => console.error('Error updating issue:', error)
-      );
+      // this.issuesService.updateIssue(issue).subscribe(
+      //   () => console.log('Issue updated successfully'),
+      //   (error) => console.error('Error updating issue:', error)
+      // );
     }
   }
 

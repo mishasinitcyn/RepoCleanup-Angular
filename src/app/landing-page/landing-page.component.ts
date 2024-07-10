@@ -5,19 +5,24 @@ import { Router } from '@angular/router';
 import { IssuesService } from '../issues.service';
 import { mockIssues } from './mockIssues';
 import { SvgService } from '../svg.service';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.less']
 })
-export class LandingPageComponent implements OnInit {
+export class LandingPageComponent {
+  constructor(private authService: AuthService, private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService: SvgService) { }
+
+  login() {
+    this.authService.login();
+  }
   repoUrl: string = '';
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
   isDarkMode = true;
 
-  constructor(private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService: SvgService) { }
 
   ngOnInit(): void { }
 
