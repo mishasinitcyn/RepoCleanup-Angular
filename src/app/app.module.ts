@@ -29,7 +29,6 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { GithubOutline } from '@ant-design/icons-angular/icons';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
-import { SvgService } from './svg.service';
 import { Squiggly1Component } from './squiggly1/squiggly1.component';
 import { Squiggly2Component } from './squiggly2/squiggly2.component';
 import { CallbackComponent } from './callback/callback.component';
@@ -67,7 +66,7 @@ import { CallbackComponent } from './callback/callback.component';
     MarkdownModule.forRoot(),
     RouterModule
   ],
-  providers: [IssuesService, SvgService],
+  providers: [IssuesService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,10 +1,8 @@
-// src/app/landing-page/landing-page.component.ts
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { IssuesService } from '../issues.service';
 import { mockIssues } from './mockIssues';
-import { SvgService } from '../svg.service';
 import { AuthService } from '../auth.service';
 
 @Component({
@@ -13,7 +11,7 @@ import { AuthService } from '../auth.service';
   styleUrls: ['./landing-page.component.less']
 })
 export class LandingPageComponent {
-  constructor(private authService: AuthService, private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService: SvgService) { }
+  constructor(private authService: AuthService, private http: HttpClient, private router: Router, private issuesService: IssuesService) { }
 
   login() {
     this.authService.login();

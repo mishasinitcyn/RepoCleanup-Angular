@@ -1,4 +1,3 @@
-// src/app/issues.service.ts
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IssueLabel } from './interface';
@@ -11,7 +10,7 @@ import { environment } from '../environments/environment';
   providedIn: 'root'
 })
 export class IssuesService {
-  private fastApiUrl = 'http://localhost:8000';
+  private fastApiUrl = environment.fastApiUrl;
   private apiUrl = environment.apiUrl;
   private githubApiUrl = 'https://api.github.com';
   private issues: any[] = [];
@@ -48,8 +47,4 @@ export class IssuesService {
       })
     );
   }
-
-  // updateIssue(issue: any): Observable<any> {
-  //   return this.http.patch(`${this.apiUrl}/issues/${issue.id}`, issue);
-  // }
 }
