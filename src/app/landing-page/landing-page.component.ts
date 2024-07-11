@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { IssuesService } from '../issues.service';
 import { mockIssues } from './mockIssues';
 import { AuthService } from '../auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-landing-page',
@@ -11,11 +12,16 @@ import { AuthService } from '../auth.service';
   styleUrls: ['./landing-page.component.less']
 })
 export class LandingPageComponent {
-  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) { }
   repoUrl: string = '';
+  user$: Observable<any>;
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
   isDarkMode = true;
+  
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) {
+    this.user$ = this.authService.getUser();
+  }
+  
 
 
   ngOnInit(): void { }
@@ -24,10 +30,14 @@ export class LandingPageComponent {
     this.authService.login();
   }
 
+  logout() {
+    this.authService.logout();
+  }
+
   fetchIssues(isGuest: boolean = false) {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      alert('Invalid GitHub URL');
+      this.fetchIssues_mock();
       return;
     }
 

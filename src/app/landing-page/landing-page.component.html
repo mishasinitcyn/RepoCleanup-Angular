@@ -1,5 +1,10 @@
 <div class="landing-page" [class.dark-mode]="isDarkMode">
-  <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+  <ng-template #githubIcon>
+    <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+  </ng-template>
+  <ng-container *ngIf="user$ | async as user; else githubIcon">
+    <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
+  </ng-container>
   <div class="svg-container">
     <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
   </div>

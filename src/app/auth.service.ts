@@ -1,21 +1,33 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../environments/environment';
+import { User } from './interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private tokenSubject = new BehaviorSubject<string | null>(null);
+  private userSubject = new BehaviorSubject<User | null>(null);
 
   constructor(private http: HttpClient) {
-    this.tokenSubject.next(localStorage.getItem('github_token'));
+    const token = localStorage.getItem('github_token');
+    if (token) {
+      this.tokenSubject.next(token);
+      this.fetchUser();
+    }
   }
 
   login(): void {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${environment.githubClientId}&redirect_uri=${environment.githubRedirectUri}&scope=repo`;
     window.location.href = githubAuthUrl;
+  }
+
+  logout(): void {
+    localStorage.removeItem('github_token');
+    this.tokenSubject.next(null);
+    this.userSubject.next(null);
   }
 
   handleCallback(code: string): Observable<any> {
@@ -26,18 +38,27 @@ export class AuthService {
   setToken(token: string): void {
     localStorage.setItem('github_token', token);
     this.tokenSubject.next(token);
+    this.fetchUser();
   }
+
 
   getToken(): Observable<string | null> {
     return this.tokenSubject.asObservable();
   }
 
-  logout(): void {
-    localStorage.removeItem('github_token');
-    this.tokenSubject.next(null);
-  }
-
   isAuthenticated(): boolean {
     return !!this.tokenSubject.value;
+  }
+
+  getUser(): Observable<User | null> {
+    return this.userSubject.asObservable();
+  }
+
+  private fetchUser(): void {
+    this.http.get<User>('https://api.github.com/user', {
+      headers: { Authorization: `token ${this.tokenSubject.value}` }
+    }).pipe(
+      tap(user => this.userSubject.next(user))
+    ).subscribe();
   }
 }

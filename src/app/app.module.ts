@@ -26,11 +26,12 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
+import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { GithubOutline } from '@ant-design/icons-angular/icons';
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
-import { Squiggly1Component } from './squiggly1/squiggly1.component';
-import { Squiggly2Component } from './squiggly2/squiggly2.component';
+import { Squiggly1Component } from './assets/squiggly1/squiggly1.component';
+import { Squiggly2Component } from './assets/squiggly2/squiggly2.component';
 import { CallbackComponent } from './callback/callback.component';
 
 @NgModule({
@@ -61,6 +62,7 @@ import { CallbackComponent } from './callback/callback.component';
     NzIconModule.forRoot([GithubOutline]),
     NzModalModule,
     NzTypographyModule,
+    NzAvatarModule,
     ClipboardModule,
     NzMessageModule,
     MarkdownModule.forRoot(),

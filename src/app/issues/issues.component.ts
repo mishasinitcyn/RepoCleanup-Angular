@@ -5,6 +5,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { AuthService } from '../auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-issues',
@@ -16,28 +18,39 @@ export class IssuesComponent implements OnInit {
 
   issues: any[] = [];
   showAlert = false;
+  isLoggedIn = false;
+  user$: Observable<any>;
 
-  constructor(
-    private issuesService: IssuesService,
-    private notification: NzNotificationService,
-    private modal: NzModalService,
-    private message: NzMessageService,
-    private clipboard: Clipboard
-  ) {}
+  constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
+    this.user$ = this.authService.getUser();
+  }
 
   ngOnInit(): void {
     this.issues = this.issuesService.getIssues();
-    this.showNotification('Spam Detection', 'Spam detection in progress...');
+    this.checkLoginStatus();
   }
 
-  showNotification(title: string, content: string): void {
-    this.notification.template(this.githubNotification, {
-      nzData: { title, content },
-      nzPlacement: 'topRight',
-      nzCloseIcon: undefined,
+  login() {
+    this.authService.login();
+  }
+
+  checkLoginStatus(): void {
+    this.authService.getToken().subscribe(token => {
+      this.isLoggedIn = !!token;
+      if (!this.isLoggedIn) {
+        this.showGithubNotification();
+      }
     });
   }
 
+  showGithubNotification(): void {
+    this.notification.template(this.githubNotification, {
+      nzData: { title: 'GitHub Login', content: 'Please log in for full functionality' },
+      nzPlacement: 'topRight',
+      nzCloseIcon: undefined,
+      nzDuration: 0
+    });
+  }
   detectSpam(): void {
     if (!this.issues.length){
       return

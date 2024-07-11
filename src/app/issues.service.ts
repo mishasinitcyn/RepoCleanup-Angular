@@ -29,15 +29,6 @@ export class IssuesService {
     return this.issues;
   }
 
-  fetchIssues_(owner: string, repo: string): Observable<any[]> {
-    const url = `${this.githubApiUrl}/${owner}/${repo}/issues`;
-    const params = {
-      per_page: '30',
-      state: 'open'
-    };
-    return this.http.get<any[]>(url, { params });
-  }
-
   fetchIssues(owner: string, repo: string): Observable<any[]> {
     return this.authService.getToken().pipe(
       switchMap(token => {
