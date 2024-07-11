@@ -20,6 +20,7 @@ export class IssuesComponent implements OnInit {
   showAlert = false;
   isLoggedIn = false;
   user$: Observable<any>;
+  selectedTabIndex = 0;
 
   constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
     this.user$ = this.authService.getUser();
@@ -175,5 +176,9 @@ export class IssuesComponent implements OnInit {
       ],
       nzWidth: 600,
     });
+  }
+
+  onTabChange(event: any): void {
+    this.selectedTabIndex = event.index;
   }
 }

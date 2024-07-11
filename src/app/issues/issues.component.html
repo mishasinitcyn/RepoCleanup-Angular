@@ -11,45 +11,58 @@
   </div>
 </ng-template>
 
-
 <nz-page-header>
   <nz-page-header-title>RepoCleanup</nz-page-header-title>
-  <nz-page-header-subtitle>Decluttering open-source projectss</nz-page-header-subtitle>
+  <nz-page-header-subtitle>Decluttering open-source projects</nz-page-header-subtitle>
+  <nz-page-header-extra>
+    <ng-container *ngIf="issues.length > 0">
+      <button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()" [nzLoading]="showAlert">
+        <!-- <i nz-icon nzType="radar-chart" nzTheme="outline"></i> -->
+        Detect Spam
+      </button>
+      <!-- <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div> -->
+    </ng-container>
+    <!-- <ng-template #githubIcon>
+      <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+    </ng-template>
+    <ng-container *ngIf="user$ | async as user; else githubIcon">
+      <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
+    </ng-container> -->
+  </nz-page-header-extra>
+  <nz-page-header-footer>
+    <nz-tabset [nzSelectedIndex]="selectedTabIndex" (nzSelectChange)="onTabChange($event)">
+      <nz-tab nzTitle="Issues"></nz-tab>
+      <nz-tab nzTitle="Cleanup Report"></nz-tab>
+    </nz-tabset>
+  </nz-page-header-footer>
 </nz-page-header>
-
-<ng-template #githubIcon>
-  <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
-</ng-template>
-<ng-container *ngIf="user$ | async as user; else githubIcon">
-  <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
-</ng-container>
 
 <!-- <div class="svg-container">
   <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
 </div> -->
 
-<nz-flex *ngIf="issues.length" [nzJustify]="'center'" [nzAlign]="'center'" [nzGap]="'middle'">
-  <div><button nz-button nzType="default" class="gradient-button" (click)="showCleanupReport()">View Cleanup Report</button></div>
-  <div *ngIf="!showAlert"><button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button></div>
-  <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div>
-</nz-flex>
-
-<div class="issues-page">
-  <div *ngIf="issues.length === 0" style="text-align: center;">
-    <h2>No issues found.</h2>
-  </div>
-
-  <div *ngIf="issues.length > 0" style="padding: 20px;">
-    <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showRemoveSpamModal(issue) : showAddSpamModal(issue)" style="margin-bottom: 20px;">
-      <h1>{{ issue.title }}</h1>
-      <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
-      <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
-        <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
-          {{ label.name }}
-        </nz-tag>
+<div [ngSwitch]="selectedTabIndex">
+  <ng-container *ngSwitchCase="0">
+    <div class="issues-page">
+      <div *ngIf="issues.length === 0" style="text-align: center;">
+        <h2>No issues found.</h2>
       </div>
-    </nz-card>
-  </div>
-  
 
+      <div *ngIf="issues.length > 0" style="padding: 20px;">
+        <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showRemoveSpamModal(issue) : showAddSpamModal(issue)" style="margin-bottom: 20px;">
+          <h1>{{ issue.title }}</h1>
+          <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
+          <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
+            <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+              {{ label.name }}
+            </nz-tag>
+          </div>
+        </nz-card>
+      </div>
+    </div>
+  </ng-container>
+
+  <ng-container *ngSwitchCase="1">
+    <app-cleanup-report [issues]="issues"></app-cleanup-report>
+  </ng-container>
 </div>
