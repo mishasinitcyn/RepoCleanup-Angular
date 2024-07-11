@@ -12,23 +12,22 @@
 </ng-template>
 
 <nz-page-header>
+  <!-- Avatar -->
+  <nz-avatar nz-page-header-avatar [nzSrc]="'assets/icon.svg'" nzSize="large" nzShape="square"></nz-avatar>
+  
+  <!-- Title and Subtitle -->
   <nz-page-header-title>RepoCleanup</nz-page-header-title>
   <nz-page-header-subtitle>Decluttering open-source projects</nz-page-header-subtitle>
+
+  <!-- Github Logo / User Avatar -->
   <nz-page-header-extra>
-    <ng-container *ngIf="issues.length > 0">
-      <button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()" [nzLoading]="showAlert">
-        <!-- <i nz-icon nzType="radar-chart" nzTheme="outline"></i> -->
-        Detect Spam
-      </button>
-      <!-- <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div> -->
-    </ng-container>
-    <!-- <ng-template #githubIcon>
-      <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+    <nz-avatar *ngIf="user$ | async as user; else githubIcon" nz-page-header-avatar  nzSize="large" [nzSrc]="user.avatar_url"> </nz-avatar>
+    <ng-template #githubIcon>
+      <nz-avatar nz-page-header-avatar nzIcon="github"  nzSize="large" [nzSrc]="'assets/github.svg'" (click)="login()"></nz-avatar>
     </ng-template>
-    <ng-container *ngIf="user$ | async as user; else githubIcon">
-      <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
-    </ng-container> -->
   </nz-page-header-extra>
+
+  <!-- Footer with tabs -->
   <nz-page-header-footer>
     <nz-tabset [nzSelectedIndex]="selectedTabIndex" (nzSelectChange)="onTabChange($event)">
       <nz-tab nzTitle="Issues"></nz-tab>
@@ -37,12 +36,13 @@
   </nz-page-header-footer>
 </nz-page-header>
 
-<!-- <div class="svg-container">
-  <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
-</div> -->
-
 <div [ngSwitch]="selectedTabIndex">
   <ng-container *ngSwitchCase="0">
+    <div class="button-container">
+      <button nz-button nzType="primary" (click)="detectSpam()" [nzLoading]="showAlert">
+        Detect Spam
+      </button>
+    </div>
     <div class="issues-page">
       <div *ngIf="issues.length === 0" style="text-align: center;">
         <h2>No issues found.</h2>
@@ -63,6 +63,10 @@
   </ng-container>
 
   <ng-container *ngSwitchCase="1">
-    <app-cleanup-report [issues]="issues"></app-cleanup-report>
+    <app-cleanup-report
+      [spamIssues]="getSpamIssues()"
+      [totalIssues]="issues.length"
+      (removeSpamLabelEvent)="removeSpamLabel($event)">
+    </app-cleanup-report>
   </ng-container>
 </div>

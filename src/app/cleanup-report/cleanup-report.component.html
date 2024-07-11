@@ -1,6 +1,5 @@
 <div class="cleanup-report">
-  <!-- <h1 nz-typography>Cleanup Report</h1> -->
-  
+
   <div class="summary-card">
     <nz-card [nzBordered]="false">
       <nz-card-meta [nzTitle]="'Detected Spam Issues'" [nzDescription]="spamDescription">
@@ -13,71 +12,52 @@
       </ng-template>
     </nz-card>
   </div>
-  
-  <nz-card [nzBordered]="false" class="spam-issues-card">
-    <nz-card-meta [nzTitle]="'Spam Issues'">
-    </nz-card-meta>
-    <nz-table #spamIssuesTable [nzData]="spamIssues" [nzPageSize]="10">
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>ID</th>
-          <th>Number</th>
-          <th>Username</th>
-          <th>Labels</th>
-          <th>Actions</th>
+
+  <nz-table [nzData]="spamIssues">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>ID</th>
+        <th>Number</th>
+        <th>Username</th>
+        <th>Labels</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let issue of spamIssues">
+        <tr [class.expanded]="expandedIssueIds.includes(issue.id)">
+          <td (click)="toggleIssue(issue)">{{ issue.title }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.id }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.number }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.user.login }}</td>
+          <td (click)="toggleIssue(issue)">
+            <nz-tag *ngFor="let label of issue.labels">
+              {{ label.name }}
+            </nz-tag>
+          </td>
+          <td>
+            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue)">
+              <span nz-icon nzType="minus" nzTheme="outline"></span>
+            </button>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let issue of spamIssuesTable.data">
-          <tr>
-            <td>{{ issue.title }}</td>
-            <td>{{ issue.id }}</td>
-            <td>{{ issue.number }}</td>
-            <td>{{ issue.user.login }}</td>
-            <td>
-              <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.color">
-                {{ label.name }}
-              </nz-tag>
-            </td>
-            <td>
-              <button nz-button nzType="link" (click)="toggleIssue(issue.id)">
-                <i nz-icon [nzType]="expandedIssue === issue.id ? 'up' : 'down'"></i>
-              </button>
-            </td>
-          </tr>
-          <tr [nzExpand]="expandedIssue === issue.id">
-            <td colspan="6">
+        <tr *ngIf="expandedIssueIds.includes(issue.id)">
+          <td colspan="6" class="issue-details">
+            <div>
               <p><strong>Body:</strong> {{ issue.body }}</p>
               <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
-            </td>
-          </tr>
-        </ng-container>
-      </tbody>
-    </nz-table>
-  </nz-card>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </nz-table>
 
-  <nz-card [nzBordered]="false" class="label-distribution-card">
-    <nz-card-meta [nzTitle]="'Label Distribution'">
-    </nz-card-meta>
-    <nz-list [nzDataSource]="labelDistribution" [nzRenderItem]="labelItem">
-      <ng-template #labelItem let-item>
-        <nz-list-item>
-          <span>{{ item[0] }}</span>
-          <nz-tag [nzColor]="'blue'">{{ item[1] }}</nz-tag>
-        </nz-list-item>
-      </ng-template>
-    </nz-list>
-  </nz-card>
-  
   <div class="download-buttons">
-    <button nz-button nzType="primary" nzSize="small" (click)="downloadTextReport()">
-      <i nz-icon nzType="download" nzTheme="outline"></i>
-      Text Report
-    </button>
     <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()">
       <i nz-icon nzType="file-markdown" nzTheme="outline"></i>
-      Markdown Report
+      Download Report
     </button>
   </div>
 </div>

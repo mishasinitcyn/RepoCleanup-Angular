@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -6,22 +6,30 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./cleanup-report.component.less']
 })
 export class CleanupReportComponent {
-  @Input() issues: any[] = [];
+  @Input() spamIssues: any[] = [];
+  @Input() totalIssues: number = 0;
+  @Output() removeSpamLabelEvent = new EventEmitter<any>()
+  expandedIssueIds: number[] = [];
 
-  get spamIssues() {
-    return this.issues.filter(issue => issue.labels.some((label: any) => label.name === 'spam'));
-  }
-
-  get spamCount() {
+  get spamCount(): number {
     return this.spamIssues.length;
   }
 
-  get totalIssues() {
-    return this.issues.length;
+  get spamRatio(): number {
+    return (this.spamCount / this.totalIssues) * 100;
   }
 
-  get spamRatio() {
-    return (this.spamCount / this.totalIssues) * 100;
+  toggleIssue(issue: any): void {
+    const index = this.expandedIssueIds.indexOf(issue.id);
+    if (index === -1) {
+      this.expandedIssueIds.push(issue.id);
+    } else {
+      this.expandedIssueIds.splice(index, 1);
+    }
+  }
+
+  removeSpamLabel(issue: any): void {
+    this.removeSpamLabelEvent.emit(issue);
   }
 
   get labelDistribution() {
@@ -38,17 +46,11 @@ export class CleanupReportComponent {
       .slice(0, 10);
   }
 
-  expandedIssue: number | null = null;
-
-  toggleIssue(id: number) {
-    this.expandedIssue = this.expandedIssue === id ? null : id;
-  }
-
   downloadTextReport() {
-    const reportContent = this.spamIssues.map(issue => 
+    const reportContent = this.spamIssues.map(issue =>
       `Title: ${issue.title}\nBody: ${issue.body}\nUsername: ${issue.user.login}\nDate: ${issue.created_at}\nIssue Number: ${issue.number}\nLabels: ${issue.labels.map((l: any) => l.name).join(', ')}\n\n`
     ).join('');
-    
+
     this.downloadFile(reportContent, 'spam_issues_report.txt', 'text/plain');
   }
 
@@ -65,16 +67,18 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
 
 ## Detailed Spam Issues
 
-${this.spamIssues.map(issue => `
-### Issue #${issue.number}: ${issue.title}
-- **ID**: ${issue.id}
-- **Username**: ${issue.user.login}
-- **Date**: ${issue.created_at}
-- **Labels**: ${issue.labels.map((l: any) => l.name).join(', ')}
-- **Body**: ${issue.body}
-`).join('\n')}
-`;
-    
+  ${this.spamIssues.map(issue => `
+  ### Issue #${issue.number}: ${issue.title}
+  - **ID**: ${issue.id}
+  - **Username**: ${issue.user.login}
+  - **Date**: ${issue.created_at}
+  - **Labels**: ${issue.labels.map((l: any) => l.name).join(', ')}
+  - **Body**: \`\`\`\`
+              ${issue.body}
+              \`\`\`\`
+  `).join('\n')}
+  `;
+
     this.downloadFile(reportContent, 'spam_issues_report.md', 'text/markdown');
   }
 

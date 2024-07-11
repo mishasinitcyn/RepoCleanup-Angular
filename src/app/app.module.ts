@@ -11,6 +11,11 @@ import { AppComponent } from './app.component';
 import { LandingPageComponent } from './landing-page/landing-page.component';
 import { IssuesComponent } from './issues/issues.component';
 
+import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
+import { registerLocaleData } from '@angular/common';
+import en from '@angular/common/locales/en';
+registerLocaleData(en);
+
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
@@ -32,8 +37,9 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
-import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline } from '@ant-design/icons-angular/icons';
-const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline];
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline } from '@ant-design/icons-angular/icons';
+const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline];
 
 import { IssuesService } from './issues.service';
 import {MarkdownModule} from 'ngx-markdown'
@@ -76,12 +82,13 @@ import { CleanupReportComponent } from './cleanup-report/cleanup-report.componen
     NzModalModule,
     NzTypographyModule,
     NzAvatarModule,
+    NzToolTipModule,
     ClipboardModule,
     NzMessageModule,
     MarkdownModule.forRoot(),
     RouterModule
   ],
-  providers: [IssuesService],
+  providers: [IssuesService, { provide: NZ_I18N, useValue: en_US }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
