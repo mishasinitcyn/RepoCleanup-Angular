@@ -3,9 +3,14 @@ import { CommonEngine } from '@angular/ssr';
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import { environment } from './src/environments/environment';
 import AppServerModule from './src/main.server';
+import axios from 'axios';
+import dotenv from 'dotenv';
 
-// The Express app is exported so that it can be used by serverless Functions.
+dotenv.config();
+
 export function app(): express.Express {
   const server = express();
   const serverDistFolder = dirname(fileURLToPath(import.meta.url));
@@ -16,10 +21,71 @@ export function app(): express.Express {
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
+  server.use(express.json());
 
-  // Example Express Rest API endpoints
-  // server.get('/api/**', (req, res) => { });
-  // Serve static files from /browser
+  // GitHub OAuth callback endpoint
+  server.post('/api/github/callback', async (req, res) => {
+    const { code } = req.body;
+    console.log('posting')
+    try {
+      const response = await axios.post('https://github.com/login/oauth/access_token', {
+        client_id: process.env["GITHUB_CLIENT_ID"],
+        client_secret: process.env["GITHUB_CLIENT_SECRET"],
+        code,
+      }, {
+        headers: {
+          Accept: 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('GitHub OAuth error:', error);
+      res.status(500).json({ error: 'Failed to authenticate' });
+    }
+  });
+  
+
+  // GitHub API proxy
+  server.get('/api/github/issues/:owner/:repo', async (req, res) => {
+    const { owner, repo } = req.params;
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    try {
+      const params = {
+        per_page: token ? '30' : '10',
+        state: 'open'
+      };
+
+      const headers: any = {
+        Accept: 'application/vnd.github.v3+json'
+      };
+
+      if (token) {
+        headers.Authorization = `token ${token}`;
+      }
+
+      const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/issues`, {
+        params,
+        headers
+      });
+
+      res.json(response.data);
+    } catch (error: any) {
+      console.error('GitHub API error:', error);
+      res.status(error.response?.status || 500).json({ error: 'Failed to fetch issues' });
+    }
+  });
+
+  // Proxy requests to FastAPI backend
+  server.use('/api', createProxyMiddleware({
+    target: environment.fastApiUrl,
+    changeOrigin: true,
+    pathRewrite: {
+      '^/api/classify_spam': '/classify_spam',
+      '^/api/issues': '/issues'
+    }
+  }));
+
   server.get('**', express.static(browserDistFolder, {
     maxAge: '1y',
     index: 'index.html',

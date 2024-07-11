@@ -4,6 +4,9 @@ import { IssueLabel, SpamLabel } from '../interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { Clipboard } from '@angular/cdk/clipboard';
+import { AuthService } from '../auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-issues',
@@ -15,28 +18,43 @@ export class IssuesComponent implements OnInit {
 
   issues: any[] = [];
   showAlert = false;
+  isLoggedIn = false;
+  user$: Observable<any>;
 
-  constructor(
-    private issuesService: IssuesService,
-    private notification: NzNotificationService,
-    private modal: NzModalService,
-    private message: NzMessageService
-  ) {}
+  constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
+    this.user$ = this.authService.getUser();
+  }
 
   ngOnInit(): void {
     this.issues = this.issuesService.getIssues();
-    this.showNotification('Spam Detection', 'Spam detection in progress...');
+    this.checkLoginStatus();
   }
 
-  showNotification(title: string, content: string): void {
-    this.notification.template(this.githubNotification, {
-      nzData: { title, content },
-      nzPlacement: 'topRight',
-      nzCloseIcon: undefined,
+  login() {
+    this.authService.login();
+  }
+
+  checkLoginStatus(): void {
+    this.authService.getToken().subscribe(token => {
+      this.isLoggedIn = !!token;
+      if (!this.isLoggedIn) {
+        this.showGithubNotification();
+      }
     });
   }
 
+  showGithubNotification(): void {
+    this.notification.template(this.githubNotification, {
+      nzData: { title: 'GitHub Login', content: 'Please log in for full functionality' },
+      nzPlacement: 'topRight',
+      nzCloseIcon: undefined,
+      nzDuration: 0
+    });
+  }
   detectSpam(): void {
+    if (!this.issues.length){
+      return
+    }
     this.showAlert = true;
     this.issuesService.sendIssues(this.issues).subscribe(
       (response: IssueLabel[]) => {
@@ -107,11 +125,6 @@ export class IssuesComponent implements OnInit {
   removeSpamLabel(issue: any): void {
     issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
     this.sortIssues();
-    // this.message.success('Spam label removed successfully');
-    this.issuesService.updateIssue(issue).subscribe(
-      () => console.log('Issue updated successfully'),
-      (error) => console.error('Error updating issue:', error)
-    );
   }
 
   showAddSpamModal(issue: any): void {
@@ -134,11 +147,33 @@ export class IssuesComponent implements OnInit {
     if (!issue.labels.some((label: any) => label.name === 'spam')) {
       issue.labels.push(SpamLabel);
       this.sortIssues();
-      // this.message.success('Spam label added successfully');
-      this.issuesService.updateIssue(issue).subscribe(
-        () => console.log('Issue updated successfully'),
-        (error) => console.error('Error updating issue:', error)
-      );
     }
+  }
+
+  showCleanupReport(): void {
+    const spamIssues = this.issues.filter(issue => this.hasSpamLabel(issue));
+    const reportContent = spamIssues.map(issue => `${issue.id}`).join(',');
+
+    this.modal.create({
+      nzTitle: 'Cleanup Report',
+      nzContent: `
+        <p>Issues marked as spam:</p>
+        <textarea readonly rows="10" style="width: 100%;">${reportContent}</textarea>
+      `,
+      nzFooter: [
+        {
+          label: 'Copy to Clipboard',
+          onClick: () => {
+            this.clipboard.copy(reportContent);
+            this.message.success('Report copied to clipboard');
+          }
+        },
+        // {
+        //   label: 'Close',
+        //   onClick: () => {}
+        // }
+      ],
+      nzWidth: 600,
+    });
   }
 }

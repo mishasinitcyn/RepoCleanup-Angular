@@ -1,4 +1,3 @@
-/* src/app/landing-page/landing-page.component.less */
 .landing-page {
   margin: 0;
   height: 100vh;
@@ -7,6 +6,37 @@
   align-items: center;
   position: relative;
   overflow: hidden;
+
+  .github-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 40px;
+    font-size: 50px;
+    cursor: pointer;
+  }
+
+  .user-avatar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin: 40px;
+  }
+
+  .svg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 40px;
+    
+    .repo-cleanup-icon {
+      width: 60px; 
+      height: 60px;
+    }
+  }
 
   // Dark mode background
   &::before {
@@ -38,16 +68,6 @@
     &::before {
       display: block;
     }
-  }
-
-
-  .github-icon {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 40px;
-    font-size: 50px;
-    // color: #000;
   }
 }
 
@@ -106,18 +126,6 @@
       animation-delay: 1s;
     }
 
-    .sparkle {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-radius: 50%;
-      opacity: 0;
-      animation: sparkle 4s infinite 2s;
-      top: 40%;
-      left: 50%;
-    }
-
     &.dark-mode {
       background: linear-gradient(to bottom right, white, rgba(255, 255, 255, 0.4));
       &::before,
@@ -138,7 +146,6 @@
     }
   }
 
-
   .input-container {
     position: relative;
     width: 100%;
@@ -157,7 +164,7 @@
         position: absolute;
         top: -6rem;
         right: -3rem;
-        transform: translateY(0) translateX(4rem);
+        transform: translateY(2rem) translateX(0rem);
         color: rgb(103, 232, 249);
       }
     }
@@ -170,7 +177,7 @@
         position: absolute;
         bottom: 0;
         left: 0;
-        transform: translateY(2.5rem) translateX(-8rem);
+        transform: translateY(2rem) translateX(-10rem);
         color: rgb(216 180 254);
       }
     }
@@ -220,4 +227,3 @@
     background: radial-gradient(125% 125% at 51% 11%, #000000 40%, #64e 100%);
   }
 }
-

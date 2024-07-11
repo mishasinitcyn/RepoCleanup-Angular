@@ -1,8 +1,11 @@
-<!-- src/app/squiggly1/squiggly1.component.html -->
-<svg
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-squiggly1',
+  template: `<svg
   class="w-16 h-auto text-cyan-400 dark:text-cyan-300"
-  width="121"
-  height="135"
+  width="70"
+  height="80"
   viewBox="0 0 121 135"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
@@ -26,3 +29,8 @@
     stroke-linecap="round"
   />
 </svg>
+`
+})
+export class Squiggly1Component {
+
+}

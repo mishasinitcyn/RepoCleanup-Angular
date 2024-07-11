@@ -9,7 +9,29 @@
     right: 0;
     margin: 40px;
     font-size: 50px;
-    // color: #000;
+    cursor: pointer;
+  }
+
+  .user-avatar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin: 40px;
+  }
+
+  .svg-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 40px;
+    
+    .repo-cleanup-icon {
+      width: 60px; 
+      height: 60px;
+    }
   }
 
   nz-page-header-extra {
@@ -33,6 +55,11 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     cursor: pointer;
 
+    &:hover {
+      // background: linear-gradient(to top, #4f53a644, #2596ff00);
+      // box-shadow: 0 6px 20px rgba(255, 0, 85, 0.5);
+    }
+
     &.spam-issue {
       background-color: #ce394d;
       background: linear-gradient(#cc4c6c, #ce394d);
@@ -46,11 +73,11 @@
   }
 
   nz-card-meta {
-    color: black;
+    // color: black;
   }
 
   .nz-card-meta-title {
-    color: black;
+    // color: black;
     font-size: 2rem;
   }
 
@@ -90,25 +117,54 @@
       text-align: center;
     }
   
-    .nz-modal-content {
-      textarea {
-        width: 100%;
-        margin-bottom: 10px;
-        
+    ::ng-deep .ant-modal-content {
+      // background-color: black;
+      color: white;
+
+      .ant-modal-header {
+        // background-color: black;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+        .ant-modal-title {
+          color: white;
+        }
+      }
+
+      .ant-modal-body {
+        textarea {
+          // background-color: #1f1f1f;
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .ant-modal-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+        button {
+          // background-color: #1f1f1f;
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+
+          &:hover {
+            background-color: #2f2f2f;
+          }
+        }
       }
     }
-    
   }
 
   .gradient-button {
-    background: linear-gradient(to right, #4f54a6, #2595ff);
     color: white;
     border: none;
-    border-radius: 6px;
+    // border-radius: 6px;
+    // background: linear-gradient(to top, #4f53a6, #2596ff69);
+    // background-color: #4f54a6;
     
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(0, 118, 255, 0.5);
+    // background: linear-gradient(to right, #4f54a6, #2595ff);
+    // box-shadow: 0 6px 20px rgba(0, 118, 255, 0.5);
     }
   }
 

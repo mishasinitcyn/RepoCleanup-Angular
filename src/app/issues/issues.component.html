@@ -12,17 +12,27 @@
 </ng-template>
 
 
-<nz-page-header nzTitle="RepoCleanup" nzSubtitle="Saving open-source projects">
-  <nz-page-header-extra>
-  </nz-page-header-extra>
+<nz-page-header>
+  <nz-page-header-title>RepoCleanup</nz-page-header-title>
+  <nz-page-header-subtitle>Decluttering open-source projectss</nz-page-header-subtitle>
 </nz-page-header>
-<span nz-icon nzType="github" nzTheme="outline" class="github-icon"></span>
 
-<nz-flex [nzJustify]="'center'" [nzAlign]="'center'" [nzGap]="'middle'">
+<ng-template #githubIcon>
+  <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+</ng-template>
+<ng-container *ngIf="user$ | async as user; else githubIcon">
+  <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
+</ng-container>
+
+<!-- <div class="svg-container">
+  <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
+</div> -->
+
+<nz-flex *ngIf="issues.length" [nzJustify]="'center'" [nzAlign]="'center'" [nzGap]="'middle'">
+  <div><button nz-button nzType="default" class="gradient-button" (click)="showCleanupReport()">View Cleanup Report</button></div>
   <div *ngIf="!showAlert"><button nz-button nzType="primary" class="gradient-button" (click)="detectSpam()">Detect Spam</button></div>
   <div *ngIf="showAlert"><nz-spin nzSimple [nzSize]="'large'"></nz-spin></div>
 </nz-flex>
-<!-- <nz-alert *ngIf="showAlert" nzType="info" nzMessage="Spam detection in progress..." nzBanner class="loading-banner"></nz-alert> -->
 
 <div class="issues-page">
   <div *ngIf="issues.length === 0" style="text-align: center;">

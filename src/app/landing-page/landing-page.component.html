@@ -1,12 +1,18 @@
 <div class="landing-page" [class.dark-mode]="isDarkMode">
-  <span nz-icon nzType="github" nzTheme="outline" class="github-icon"></span>
+  <ng-template #githubIcon>
+    <span nz-icon nzType="github" nzTheme="outline" class="github-icon" (click)="login()"></span>
+  </ng-template>
+  <ng-container *ngIf="user$ | async as user; else githubIcon">
+    <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
+  </ng-container>
   <div class="svg-container">
+    <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
   </div>
   <div class="hero-section">
     <div class="container">
       <div class="content">
-        <h1 class="repocleanup-title">Repo <br /> Cleanup</h1>
-        <p class="subtitle">Automatically identify and mark spam issues in your GitHub repos with the <span class="sparkles-text">power of ML.</span></p>
+        <h1 class="repocleanup-title" nz-typography>Repo <br /> Cleanup</h1>
+        <p class="subtitle" nz-typography>Decluttering open-source repositories</p>
         <div class="input-container">
           <div class="hidden-squiggle1">
             <app-squiggly1></app-squiggly1>
@@ -17,7 +23,7 @@
           <nz-card class="custom-card">
             <div class="input-group">
               <input nz-input [(ngModel)]="repoUrl" placeholder="Enter your GitHub repository URL" />
-              <button nz-button nzType="primary" (click)="fetchIssues_mock()">Fetch Issues</button>
+              <button nz-button nzType="primary" (click)="fetchIssues()">Fetch Issues</button>
             </div>
           </nz-card>
         </div>

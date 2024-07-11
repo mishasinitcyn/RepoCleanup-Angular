@@ -6,3 +6,9 @@ export interface IssueLabel {
 export const SpamLabel = {
     name: "spam",
   };
+
+export interface User {
+    avatar_url: string;
+    name: string;
+}
+  

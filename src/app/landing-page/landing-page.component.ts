@@ -1,36 +1,43 @@
-// src/app/landing-page/landing-page.component.ts
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { IssuesService } from '../issues.service';
 import { mockIssues } from './mockIssues';
-import { SvgService } from '../svg.service';
+import { AuthService } from '../auth.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-landing-page',
   templateUrl: './landing-page.component.html',
   styleUrls: ['./landing-page.component.less']
 })
-export class LandingPageComponent implements OnInit {
+export class LandingPageComponent {
   repoUrl: string = '';
+  user$: Observable<any>;
   mockIssues: any[] = mockIssues;
   svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
   isDarkMode = true;
+  
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) {
+    this.user$ = this.authService.getUser();
+  }
+  
 
-  constructor(private http: HttpClient, private router: Router, private issuesService: IssuesService, private svgService: SvgService) { }
 
   ngOnInit(): void { }
 
-  fetchIssues(): void {
-    console.log('fetchIssues')
-    console.log(this.repoUrl)
-    if (!this.repoUrl) {
-      return;
-    }
+  login() {
+    this.authService.login();
+  }
 
+  logout() {
+    this.authService.logout();
+  }
+
+  fetchIssues(isGuest: boolean = false) {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      alert('Invalid GitHub URL');
+      this.fetchIssues_mock();
       return;
     }
 
