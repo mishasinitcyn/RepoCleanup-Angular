@@ -55,17 +55,17 @@ export class CleanupReportComponent {
   }
 
   downloadMarkdownReport() {
-    const reportContent = `# Spam Issues Report
+const reportContent = `# Cleanup Report
 
 ## Summary
 - Total Issues: ${this.totalIssues}
 - Spam Issues: ${this.spamCount}
 - Spam Ratio: ${this.spamRatio.toFixed(2)}%
 
-## Label Distribution (Top 10)
+## Label Distribution
 ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\n')}
 
-## Detailed Spam Issues
+## Spam Issues
 
   ${this.spamIssues.map(issue => `
   ### Issue #${issue.number}: ${issue.title}
@@ -73,9 +73,10 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
   - **Username**: ${issue.user.login}
   - **Date**: ${issue.created_at}
   - **Labels**: ${issue.labels.map((l: any) => l.name).join(', ')}
-  - **Body**: \`\`\`\`
-              ${issue.body}
-              \`\`\`\`
+  - **Body**: 
+  \`\`\`\`
+  ${issue.body.replace(/`/g, '\\`')}
+  \`\`\`\`
   `).join('\n')}
   `;
 
