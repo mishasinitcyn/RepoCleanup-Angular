@@ -1,0 +1,63 @@
+<div class="cleanup-report">
+
+  <div class="summary-card">
+    <nz-card [nzBordered]="false">
+      <nz-card-meta [nzTitle]="'Detected Spam Issues'" [nzDescription]="spamDescription">
+      </nz-card-meta>
+      <ng-template #spamDescription>
+        <p class="spam-count">
+          <span class="count">{{ spamCount }}</span>
+          <span class="total">/{{ totalIssues }} ({{ spamRatio.toFixed(2) }}%)</span>
+        </p>
+      </ng-template>
+    </nz-card>
+  </div>
+
+  <nz-table [nzData]="spamIssues">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>ID</th>
+        <th>Number</th>
+        <th>Username</th>
+        <th>Labels</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let issue of spamIssues">
+        <tr [class.expanded]="expandedIssueIds.includes(issue.id)">
+          <td (click)="toggleIssue(issue)">{{ issue.title }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.id }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.number }}</td>
+          <td (click)="toggleIssue(issue)">{{ issue.user.login }}</td>
+          <td (click)="toggleIssue(issue)">
+            <nz-tag *ngFor="let label of issue.labels">
+              {{ label.name }}
+            </nz-tag>
+          </td>
+          <td>
+            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue)">
+              <span nz-icon nzType="minus" nzTheme="outline"></span>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="expandedIssueIds.includes(issue.id)">
+          <td colspan="6" class="issue-details">
+            <div>
+              <p><strong>Body:</strong> {{ issue.body }}</p>
+              <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </nz-table>
+
+  <div class="download-buttons">
+    <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()">
+      <i nz-icon nzType="file-markdown" nzTheme="outline"></i>
+      Download Report
+    </button>
+  </div>
+</div>

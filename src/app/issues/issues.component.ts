@@ -20,6 +20,7 @@ export class IssuesComponent implements OnInit {
   showAlert = false;
   isLoggedIn = false;
   user$: Observable<any>;
+  selectedTabIndex = 0;
 
   constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
     this.user$ = this.authService.getUser();
@@ -122,10 +123,6 @@ export class IssuesComponent implements OnInit {
     });
   }
 
-  removeSpamLabel(issue: any): void {
-    issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
-    this.sortIssues();
-  }
 
   showAddSpamModal(issue: any): void {
     this.modal.confirm({
@@ -150,30 +147,16 @@ export class IssuesComponent implements OnInit {
     }
   }
 
-  showCleanupReport(): void {
-    const spamIssues = this.issues.filter(issue => this.hasSpamLabel(issue));
-    const reportContent = spamIssues.map(issue => `${issue.id}`).join(',');
+  getSpamIssues(): any[] {
+    return this.issues.filter(issue => this.hasSpamLabel(issue));
+  }
 
-    this.modal.create({
-      nzTitle: 'Cleanup Report',
-      nzContent: `
-        <p>Issues marked as spam:</p>
-        <textarea readonly rows="10" style="width: 100%;">${reportContent}</textarea>
-      `,
-      nzFooter: [
-        {
-          label: 'Copy to Clipboard',
-          onClick: () => {
-            this.clipboard.copy(reportContent);
-            this.message.success('Report copied to clipboard');
-          }
-        },
-        // {
-        //   label: 'Close',
-        //   onClick: () => {}
-        // }
-      ],
-      nzWidth: 600,
-    });
+  removeSpamLabel(issue: any): void {
+    issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
+    this.sortIssues();
+  }
+
+  onTabChange(event: any): void {
+    this.selectedTabIndex = event.index;
   }
 }
