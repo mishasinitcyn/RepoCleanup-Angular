@@ -42,5 +42,8 @@ testem.log
 Thumbs.db
 
 # Authentication
-environments/
+src/environments/environment.ts
+src/environments/environment.prod.ts
+# Do not ignore the template file
+!src/environments/environment.prod.template.ts
 .env
