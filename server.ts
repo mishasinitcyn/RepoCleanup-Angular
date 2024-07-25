@@ -8,6 +8,7 @@ import { environment } from './src/environments/environment';
 import AppServerModule from './src/main.server';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { Octokit } from '@octokit/rest';
 
 dotenv.config();
 
@@ -26,11 +27,10 @@ export function app(): express.Express {
   // GitHub OAuth callback endpoint
   server.post('/api/github/callback', async (req, res) => {
     const { code } = req.body;
-    console.log('posting')
     try {
       const response = await axios.post('https://github.com/login/oauth/access_token', {
-        client_id: process.env["GITHUB_CLIENT_ID"],
-        client_secret: process.env["GITHUB_CLIENT_SECRET"],
+        client_id: environment.githubClientId,
+        client_secret: environment.githubClientSecret,
         code,
       }, {
         headers: {
@@ -43,36 +43,25 @@ export function app(): express.Express {
       res.status(500).json({ error: 'Failed to authenticate' });
     }
   });
-  
 
-  // GitHub API proxy
+  // GitHub API proxy (now using Octokit)
   server.get('/api/github/issues/:owner/:repo', async (req, res) => {
     const { owner, repo } = req.params;
     const token = req.headers.authorization?.split(' ')[1];
     
     try {
-      const params = {
-        per_page: token ? '30' : '10',
+      const octokit = new Octokit({ auth: token });
+      const { data } = await octokit.issues.listForRepo({
+        owner,
+        repo,
+        per_page: token ? 30 : 10,
         state: 'open'
-      };
-
-      const headers: any = {
-        Accept: 'application/vnd.github.v3+json'
-      };
-
-      if (token) {
-        headers.Authorization = `token ${token}`;
-      }
-
-      const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/issues`, {
-        params,
-        headers
       });
 
-      res.json(response.data);
+      res.json(data);
     } catch (error: any) {
       console.error('GitHub API error:', error);
-      res.status(error.response?.status || 500).json({ error: 'Failed to fetch issues' });
+      res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
     }
   });
 
@@ -111,7 +100,7 @@ export function app(): express.Express {
 }
 
 function run(): void {
-  const port = process.env['PORT'] || 3000;
+  const port = 3000;
 
   // Start up the Node server
   const server = app();

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, from, tap } from 'rxjs';
 import { environment } from '../environments/environment';
 import { User } from './interface';
+import { Octokit } from '@octokit/rest';
 
 @Injectable({
   providedIn: 'root'
@@ -10,12 +11,12 @@ import { User } from './interface';
 export class AuthService {
   private tokenSubject = new BehaviorSubject<string | null>(null);
   private userSubject = new BehaviorSubject<User | null>(null);
+  private octokit: Octokit | null = null;
 
   constructor(private http: HttpClient) {
     const token = localStorage.getItem('github_token');
     if (token) {
-      this.tokenSubject.next(token);
-      this.fetchUser();
+      this.setToken(token);
     }
   }
 
@@ -28,19 +29,19 @@ export class AuthService {
     localStorage.removeItem('github_token');
     this.tokenSubject.next(null);
     this.userSubject.next(null);
+    this.octokit = null;
   }
 
   handleCallback(code: string): Observable<any> {
-    // TODO: This should be done in backend for security
     return this.http.post('/api/github/callback', { code });
   }
 
   setToken(token: string): void {
     localStorage.setItem('github_token', token);
     this.tokenSubject.next(token);
+    this.octokit = new Octokit({ auth: token });
     this.fetchUser();
   }
-
 
   getToken(): Observable<string | null> {
     return this.tokenSubject.asObservable();
@@ -55,10 +56,22 @@ export class AuthService {
   }
 
   private fetchUser(): void {
-    this.http.get<User>('https://api.github.com/user', {
-      headers: { Authorization: `token ${this.tokenSubject.value}` }
-    }).pipe(
-      tap(user => this.userSubject.next(user))
-    ).subscribe();
+    if (this.octokit) {
+      from(this.octokit.users.getAuthenticated()).pipe(
+        tap(({ data }) => this.userSubject.next(data as User))
+      ).subscribe();
+    }
+  }
+
+  getIssues(owner: string, repo: string): Observable<any> {
+    if (this.octokit) {
+      return from(this.octokit.issues.listForRepo({
+        owner,
+        repo,
+        per_page: 30,
+        state: 'open'
+      }));
+    }
+    return this.http.get(`/api/github/issues/${owner}/${repo}`);
   }
 }
