@@ -17,7 +17,20 @@ router.post('/callback', async (req, res) => {
         Accept: 'application/json'
       }
     });
-    res.json(response.data);
+    const octokit = new Octokit({ auth: response.data.access_token });
+    const { data: userData } = await octokit.users.getAuthenticated();
+
+    // Save user to database
+    const saveUserResponse = await axios.post('http://localhost:3000/api/users', {
+      githubID: userData.id.toString(),
+      username: userData.login,
+      email: userData.email
+    });
+
+    res.json({ 
+      access_token: response.data.access_token,
+      user: saveUserResponse.data 
+    });
   } catch (error) {
     console.error('GitHub OAuth error:', error);
     res.status(500).json({ error: 'Failed to authenticate' });

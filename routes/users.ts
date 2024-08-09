@@ -3,9 +3,20 @@ import { pool } from '../db';
 
 const router = express.Router();
 
-// Add user-related routes here
-// For example:
-// router.get('/:id', async (req, res) => { ... });
-// router.post('/', async (req, res) => { ... });
+router.post('/', async (req, res) => {
+  const { githubID, username, email } = req.body;
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO Users (githubID, username, email) VALUES ($1, $2, $3) ON CONFLICT (githubID) DO UPDATE SET username = $2, email = $3 RETURNING *',
+      [githubID, username, email]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error saving user:', error);
+    res.status(500).json({ error: 'Failed to save user' });
+  }
+});
 
 export const usersRouter = router;
