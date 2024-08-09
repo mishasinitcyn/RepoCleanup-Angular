@@ -9,8 +9,20 @@ import AppServerModule from './src/main.server';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { Octokit } from '@octokit/rest';
+import { Pool } from 'pg';
 
 dotenv.config();
+
+// Initialize database connection
+const pool = new Pool({
+  host: environment.dbHost,
+  port: parseInt(environment.dbPort),
+  database: environment.dbName,
+  user: environment.dbUser,
+  password: environment.dbPassword,
+  ssl: false
+});
+console.log(`Pool environment:`, environment)
 
 export function app(): express.Express {
   const server = express();
@@ -62,6 +74,40 @@ export function app(): express.Express {
     } catch (error: any) {
       console.error('GitHub API error:', error);
       res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
+    }
+  });
+
+  // PostgreSQL Database Endpoint
+  server.get('/api/reports/:id', async (req, res) => {
+    const reportId = parseInt(req.params.id);
+    console.log("FETCHING", reportId)
+    if (isNaN(reportId)) {
+      return res.status(400).json({ error: 'Invalid report ID' });
+    }
+  
+    try {
+      const query = `
+        SELECT * from reports WHERE reportID = $1;
+      `;
+      const result = await pool.query(query, [reportId]);
+      console.log("result:", result)
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Report not found' });
+      }
+  
+      const report = result.rows[0];
+      return res.json({
+        reportid: report.reportid,
+        creatorid: report.creatorid,
+        datecreated: report.datecreated,
+        isopen: report.isopen,
+        repoid: report.repoid,
+        repoadmingithubid: report.repoadmingithubid,
+        reportcontent: report.reportcontent
+      });
+    } catch (err) {
+      console.error('Error fetching report:', err);
+      return res.status(500).json({ error: 'An error occurred while fetching the report' });
     }
   });
 
