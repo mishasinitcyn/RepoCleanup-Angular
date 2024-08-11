@@ -1,5 +1,6 @@
 import express from 'express';
 import { pool } from '../db';
+import { QueryResult } from 'pg';
 
 const router = express.Router();
 
@@ -91,6 +92,32 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Error saving report:', err);
     return res.status(500).json({ error: 'An error occurred while saving the report' });
+  }
+});
+
+router.delete('/:creatorID/:repoID', async (req, res) => {
+  const { creatorID, repoID } = req.params;
+  if (!creatorID || !repoID) {
+    return res.status(400).json({ error: 'Missing required parameters: creatorID and repoID' });
+  }
+
+  try {
+    const query = `
+      DELETE FROM Reports 
+      WHERE creatorID = $1 AND repoID = $2 AND isOpen = true
+      RETURNING reportID;
+    `;
+    const result: QueryResult = await pool.query(query, [creatorID, repoID]);
+
+    if (result.rowCount === 0) {
+      return res.status(204).send();
+    }
+
+    const deletedReportID = result.rows[0].reportid;
+    return res.json({ message: 'Report deleted successfully', deletedReportID });
+  } catch (err) {
+    console.error('Error deleting report:', err);
+    return res.status(500).json({ error: 'An error occurred while deleting the report' });
   }
 });
 

@@ -150,17 +150,15 @@ export class IssuesComponent implements OnInit {
   
   private fetchOpenReport([user, repoData]: [any, any]): Observable<any> {
     if (user && repoData) {
-      return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id).pipe(
-        catchError(() => of(null))
-      );
+      return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
     }
-    return of(null);
+    return of({ exists: false, report: null });
   }
   
-  private handleOpenReportResponse(report: any): void {
-    if (report) {
+  private handleOpenReportResponse(response: { exists: boolean, report: any }): void {
+    if (response.exists && response.report) {
       this.message.success("Existing report imported");
-      this.applyExistingReportLabels(report.flaggedissues);
+      this.applyExistingReportLabels(response.report.flaggedissues);
     }
   }
 }
