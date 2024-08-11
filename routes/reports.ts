@@ -34,4 +34,31 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
+router.post('/', async (req, res) => {
+  const { creatorGithubID, repoID, repoAdminGithubID, reportContent } = req.body;
+  if (!creatorGithubID || !repoID || !repoAdminGithubID || !reportContent) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  try {
+    const query = `
+      INSERT INTO Reports (creatorID, repoID, repoOwnerID, reportContent)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (creatorID, repoID, isOpen)
+      DO UPDATE SET
+        reportContent = EXCLUDED.reportContent,
+        dateCreated = CURRENT_TIMESTAMP
+      RETURNING reportID;
+    `;
+    const values = [creatorGithubID, repoID, repoAdminGithubID, reportContent];
+    
+    const result = await pool.query(query, values);
+    const reportID = result.rows[0].reportid;
+    return res.status(201).json({ message: 'Report saved successfully', reportID });
+  } catch (err) {
+    console.error('Error saving report:', err);
+    return res.status(500).json({ error: 'An error occurred while saving the report' });
+  }
+});
+
 export const reportsRouter = router;

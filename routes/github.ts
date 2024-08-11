@@ -21,7 +21,7 @@ router.post('/callback', async (req, res) => {
     const { data: userData } = await octokit.users.getAuthenticated();
 
     // Save user to database
-    const saveUserResponse = await axios.post('http://localhost:3000/api/users', {
+    const saveUserResponse = await axios.post(`${environment.apiUrl}/users`, {
       githubID: userData.id.toString(),
       username: userData.login,
       email: userData.email
@@ -43,14 +43,22 @@ router.get('/issues/:owner/:repo', async (req, res) => {
   
   try {
     const octokit = new Octokit({ auth: token });
-    const { data } = await octokit.issues.listForRepo({
+    
+    // Fetch repository information
+    const { data: repoMetadata } = await octokit.repos.get({ owner, repo });
+    
+    // Fetch issues
+    const { data: issues } = await octokit.issues.listForRepo({
       owner,
       repo,
       per_page: token ? 30 : 10,
       state: 'open'
     });
 
-    res.json(data);
+    res.json({
+      repoMetadata: repoMetadata,
+      issues: issues
+    });
   } catch (error: any) {
     console.error('GitHub API error:', error);
     res.status(error.status || 500).json({ error: 'Failed to fetch issues' });

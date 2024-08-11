@@ -12,3 +12,16 @@ export interface User {
     name: string;
 }
   
+export interface RepoData {
+    issues: any[]; 
+    repoMetadata: any;
+}
+
+export const colorMapping: { [key: string]: string } = {
+    'spam': 'red',
+    'bug': 'orange',
+    'feature': 'blue',
+    'discussion': 'purple',
+    'good-first-issue': 'teal',
+    'suggestion': 'yellow'
+  };

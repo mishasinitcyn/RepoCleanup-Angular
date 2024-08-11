@@ -8,7 +8,7 @@ router.post('/', async (req, res) => {
   
   try {
     const result = await pool.query(
-      'INSERT INTO Users (githubID, username, email) VALUES ($1, $2, $3) ON CONFLICT (githubID) DO UPDATE SET username = $2, email = $3 RETURNING *',
+      'INSERT INTO Users (ID, username, email) VALUES ($1, $2, $3) ON CONFLICT (ID) DO UPDATE SET username = $2, email = $3 RETURNING *',
       [githubID, username, email]
     );
     

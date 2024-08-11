@@ -1,4 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { ReportService } from '../report.service';
+import { IssuesService } from '../issues.service';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -6,30 +8,61 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
   styleUrls: ['./cleanup-report.component.less']
 })
 export class CleanupReportComponent {
-  @Input() spamIssues: any[] = [];
-  @Input() totalIssues: number = 0;
+  @Input() repoData: any;
+  @Input() user: any | null = null;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
   expandedIssueIds: number[] = [];
 
-  get spamCount(): number {
-    return this.spamIssues.length;
+  get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue)) : []; }
+  get totalIssues(): number { return this.repoData ? this.repoData.issues.length : 0; }
+  get spamCount(): number { return this.spamIssues.length; }
+  get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
+
+  constructor(private reportService: ReportService, private issuesService: IssuesService) {}
+  
+  hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
+  removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
+
+  saveReport(): void {
+    if (!this.repoData || !this.repoData.repoMetadata.id) {
+      console.error('Repository ID is not available');
+      return;
+    }
+    if (!this.user) {
+      console.error('User must be logged in to save report');
+      return;
+    }
+    const reportData = this.spamIssues.map((issue:any) => ({
+      issue_id: issue.id,
+      username: issue.user.login,
+      label: 'spam'
+    }));
+
+    const report = {
+      creatorGithubID: this.user.id,
+      repoID: this.repoData.repoMetadata.id,
+      repoAdminGithubID: this.repoData.repoMetadata.owner.id,
+      reportContent: JSON.stringify(reportData)
+    };
+
+    this.reportService.postReport(report).subscribe(
+      response => {
+        console.log('Report saved successfully', response);
+      },
+      error => {
+        console.error('Error saving report', error);
+      }
+    );
   }
 
-  get spamRatio(): number {
-    return (this.spamCount / this.totalIssues) * 100;
-  }
 
-  toggleIssue(issue: any): void {
+  expandIssue(issue: any): void {
     const index = this.expandedIssueIds.indexOf(issue.id);
     if (index === -1) {
       this.expandedIssueIds.push(issue.id);
     } else {
       this.expandedIssueIds.splice(index, 1);
     }
-  }
-
-  removeSpamLabel(issue: any): void {
-    this.removeSpamLabelEvent.emit(issue);
   }
 
   get labelDistribution() {
@@ -44,14 +77,6 @@ export class CleanupReportComponent {
     return Object.entries(distribution)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
-  }
-
-  downloadTextReport() {
-    const reportContent = this.spamIssues.map(issue =>
-      `Title: ${issue.title}\nBody: ${issue.body}\nUsername: ${issue.user.login}\nDate: ${issue.created_at}\nIssue Number: ${issue.number}\nLabels: ${issue.labels.map((l: any) => l.name).join(', ')}\n\n`
-    ).join('');
-
-    this.downloadFile(reportContent, 'spam_issues_report.txt', 'text/plain');
   }
 
   downloadMarkdownReport() {

@@ -9,5 +9,3 @@ export const pool = new Pool({
   password: environment.dbPassword,
   ssl: false
 });
-
-console.log(`Pool environment:`, environment);

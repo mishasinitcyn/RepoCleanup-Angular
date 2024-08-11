@@ -9,7 +9,6 @@ import { environment } from '../environments/environment';
 export class ReportService {
   constructor(private http: HttpClient) {}
 
-  getReport(id: number): Observable<any> {
-    return this.http.get(`${environment.apiUrl}/reports/${id}`);
-  }
+  getReport = (id: number): Observable<any> => this.http.get(`${environment.apiUrl}/reports/${id}`); 
+  postReport = (reportData: any): Observable<any> => this.http.post(`${environment.apiUrl}/reports`, reportData);
 }
