@@ -38,18 +38,18 @@
 
 <div [ngSwitch]="selectedTabIndex">
   <ng-container *ngSwitchCase="0">
-    <div class="button-container">
-      <button nz-button nzType="primary" (click)="detectSpam()" [nzLoading]="showAlert">
+    <!-- <div class="button-container">
+      <button nz-button nzType="primary" (click)="detectSpam()" [nzLoading]="loadingClassification">
         Detect Spam
       </button>
-    </div>
+    </div> -->
     <div class="issues-page">
-      <div *ngIf="issues.length === 0" style="text-align: center;">
+      <div *ngIf="repoData?.issues.length === 0 || !repoData" style="text-align: center;">
         <h2>No issues found.</h2>
       </div>
 
-      <div *ngIf="issues.length > 0" style="padding: 20px;">
-        <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showRemoveSpamModal(issue) : showAddSpamModal(issue)" style="margin-bottom: 20px;">
+      <div *ngIf="repoData?.issues.length > 0" style="padding: 20px;">
+        <nz-card *ngFor="let issue of repoData?.issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showSpamModal(issue, 'remove') : showSpamModal(issue, 'add')" style="margin-bottom: 20px;">
           <h1>{{ issue.title }}</h1>
           <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
           <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
@@ -64,8 +64,8 @@
 
   <ng-container *ngSwitchCase="1">
     <app-cleanup-report
-      [spamIssues]="getSpamIssues()"
-      [totalIssues]="issues.length"
+      [repoData]="repoData"
+      [user]="currentUser"
       (removeSpamLabelEvent)="removeSpamLabel($event)">
     </app-cleanup-report>
   </ng-container>

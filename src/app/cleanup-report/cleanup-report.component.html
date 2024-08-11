@@ -27,11 +27,11 @@
     <tbody>
       <ng-container *ngFor="let issue of spamIssues">
         <tr [class.expanded]="expandedIssueIds.includes(issue.id)">
-          <td (click)="toggleIssue(issue)">{{ issue.title }}</td>
-          <td (click)="toggleIssue(issue)">{{ issue.id }}</td>
-          <td (click)="toggleIssue(issue)">{{ issue.number }}</td>
-          <td (click)="toggleIssue(issue)">{{ issue.user.login }}</td>
-          <td (click)="toggleIssue(issue)">
+          <td (click)="expandIssue(issue)">{{ issue.title }}</td>
+          <td (click)="expandIssue(issue)">{{ issue.id }}</td>
+          <td (click)="expandIssue(issue)">{{ issue.number }}</td>
+          <td (click)="expandIssue(issue)">{{ issue.user.login }}</td>
+          <td (click)="expandIssue(issue)">
             <nz-tag *ngFor="let label of issue.labels">
               {{ label.name }}
             </nz-tag>
@@ -54,10 +54,8 @@
     </tbody>
   </nz-table>
 
-  <div class="download-buttons">
-    <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()">
-      <i nz-icon nzType="file-markdown" nzTheme="outline"></i>
-      Download Report
-    </button>
+  <div class="download-buttons" *ngIf="repoData">
+    <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()"><i nz-icon nzType="file-markdown" nzTheme="outline"></i>Download Report</button>
+    <button nz-button nzType="primary" nzSize="small" (click)="saveReport()"><i nz-icon nzType="save" nzTheme="outline"></i>Save Report</button>
   </div>
 </div>

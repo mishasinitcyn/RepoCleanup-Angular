@@ -1,40 +1,36 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { IssueLabel } from './interface';
+import { Observable, BehaviorSubject, of } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { RepoData } from './interface';
+import { mockIssues } from './assets/mockIssues';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IssuesService {
-  private fastApiUrl = environment.fastApiUrl;
-  private apiUrl = environment.apiUrl;
-  private githubApiUrl = 'https://api.github.com';
-  private issues: any[] = [];
+  private repoDataSubject = new BehaviorSubject<RepoData | null>(null);
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
-  sendIssues(issues: any[]): Observable<any> {
-    return this.http.post(`${this.fastApiUrl}/classify_spam`, issues);
-  }
+  sendIssues = (issues: any[]): Observable<any> => this.http.post(`${environment.fastApiUrl}/classify_spam`, issues);
+  getRepoData = (): Observable<RepoData | null> => this.repoDataSubject.asObservable();
 
-  setIssues(issues: any[]): void {
-    this.issues = issues;
-  }
+  fetchIssues(owner: string, repo: string): Observable<RepoData> {
+    if (owner === 'mock' && repo === 'admin') {
+      return of(mockIssues as RepoData).pipe(
+        tap(repoData => this.repoDataSubject.next(repoData))
+      );
+    }
 
-  getIssues(): any[] {
-    return this.issues;
-  }
-
-  fetchIssues(owner: string, repo: string): Observable<any[]> {
     return this.authService.getToken().pipe(
       switchMap(token => {
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-        return this.http.get<any[]>(`${this.apiUrl}/github/issues/${owner}/${repo}`, { headers });
-      })
+        return this.http.get<RepoData>(`${environment.apiUrl}/github/issues/${owner}/${repo}`, { headers });
+      }),
+      tap(repoData => this.repoDataSubject.next(repoData))
     );
   }
 }

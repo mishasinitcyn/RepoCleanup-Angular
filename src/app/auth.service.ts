@@ -33,7 +33,13 @@ export class AuthService {
   }
 
   handleCallback(code: string): Observable<any> {
-    return this.http.post('/api/github/callback', { code });
+    return this.http.post('/api/github/callback', { code }).pipe(
+      tap((response: any) => {
+        if (response.access_token) {
+          this.setToken(response.access_token);
+        }
+      })
+    );
   }
 
   setToken(token: string): void {
