@@ -26,7 +26,7 @@ router.get('/:id', async (req, res) => {
       isopen: report.isopen,
       repoid: report.repoid,
       repoadmingithubid: report.repoadmingithubid,
-      reportcontent: report.reportcontent
+      flaggedissues: report.flaggedissues
     });
   } catch (err) {
     console.error('Error fetching report:', err);
@@ -34,23 +34,56 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.get('/open/:creatorID/:repoID', async (req, res) => {
+  const { creatorID, repoID } = req.params;
+  if (!creatorID || !repoID) {
+    return res.status(400).json({ error: 'Missing required query parameters: creatorID and repoID' });
+  }
+
+  try {
+    const query = `
+      SELECT * FROM reports 
+      WHERE creatorID = $1 AND repoID = $2 AND isOpen = true;
+    `;
+
+    const result = await pool.query(query, [creatorID, repoID]);
+
+    if (result.rows.length === 0) {
+      return res.status(204).send();
+    }
+
+    const report = result.rows[0];
+    return res.json({
+      reportid: report.reportid,
+      creatorid: report.creatorid,
+      datecreated: report.datecreated,
+      isopen: report.isopen,
+      repoid: report.repoid,
+      repoadmingithubid: report.repoadmingithubid,
+      flaggedissues: report.flaggedissues
+    });
+  } catch (err) {
+    console.error('Error fetching open report:', err);
+    return res.status(500).json({ error: 'An error occurred while fetching the open report' });
+  }
+});
 
 router.post('/', async (req, res) => {
-  const { creatorGithubID, repoID, repoAdminGithubID, reportContent } = req.body;
-  if (!creatorGithubID || !repoID || !repoAdminGithubID || !reportContent) {
+  const { creatorGithubID, repoID, repoAdminGithubID, flaggedissues } = req.body;
+  if (!creatorGithubID || !repoID || !repoAdminGithubID || !flaggedissues) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
     const query = `
-      INSERT INTO Reports (creatorID, repoID, repoOwnerID, reportContent)
+      INSERT INTO Reports (creatorID, repoID, repoOwnerID, flaggedissues)
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (creatorID, repoID, isOpen)
       DO UPDATE SET
-        reportContent = EXCLUDED.reportContent,
+        flaggedissues = EXCLUDED.flaggedissues,
         dateCreated = CURRENT_TIMESTAMP
       RETURNING reportID;
     `;
-    const values = [creatorGithubID, repoID, repoAdminGithubID, reportContent];
+    const values = [creatorGithubID, repoID, repoAdminGithubID, flaggedissues];
     
     const result = await pool.query(query, values);
     const reportID = result.rows[0].reportid;

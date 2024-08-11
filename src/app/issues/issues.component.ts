@@ -1,12 +1,14 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { IssuesService } from '../issues.service';
-import { colorMapping, IssueLabel, SpamLabel } from '../interface';
+import { ReportService } from '../report.service';
+import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { AuthService } from '../auth.service';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, of } from 'rxjs';
+import { switchMap, tap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-issues',
@@ -23,15 +25,13 @@ export class IssuesComponent implements OnInit {
   currentUser: any | null = null;
   selectedTabIndex = 0;
 
-  constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
+  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
     this.user$ = this.authService.getUser();
     this.user$.subscribe(user => this.currentUser = user);
   }
 
   ngOnInit(): void {
-    this.issuesService.getRepoData().subscribe(data => {
-      this.repoData = data;
-    });
+    this.initializeUserAndRepoData();
     this.checkLoginStatus();
   }
 
@@ -68,7 +68,7 @@ export class IssuesComponent implements OnInit {
         this.sortIssues();
       },
       (error) => {
-        console.error('Error sending issues:', error);
+        this.message.error("Error detecting spam")
       }
     );
   }
@@ -121,5 +121,46 @@ export class IssuesComponent implements OnInit {
         color: 'white'
       },
     });
+  }
+
+  applyExistingReportLabels(flaggedIssues: any[]): void {
+    flaggedIssues.forEach((flaggedIssue: FlaggedIssue) => {
+      const issue = this.repoData.issues.find((issue: any) => issue.id === flaggedIssue.issue_id);
+      if (issue) {
+        this.addSpamLabel(issue);
+      }
+    });
+    this.sortIssues();
+  }
+
+  private initializeUserAndRepoData(): void {
+    combineLatest([
+      this.user$,
+      this.issuesService.getRepoData()
+    ]).pipe(
+      tap(this.updateUserAndRepoData.bind(this)),
+      switchMap(this.fetchOpenReport.bind(this))
+    ).subscribe(this.handleOpenReportResponse.bind(this));
+  }
+  
+  private updateUserAndRepoData([user, repoData]: [any, any]): void {
+    this.currentUser = user;
+    this.repoData = repoData;
+  }
+  
+  private fetchOpenReport([user, repoData]: [any, any]): Observable<any> {
+    if (user && repoData) {
+      return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id).pipe(
+        catchError(() => of(null))
+      );
+    }
+    return of(null);
+  }
+  
+  private handleOpenReportResponse(report: any): void {
+    if (report) {
+      this.message.success("Existing report imported");
+      this.applyExistingReportLabels(report.flaggedissues);
+    }
   }
 }

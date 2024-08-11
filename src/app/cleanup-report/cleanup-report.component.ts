@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ReportService } from '../report.service';
 import { IssuesService } from '../issues.service';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -18,21 +19,21 @@ export class CleanupReportComponent {
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private issuesService: IssuesService) {}
+  constructor(private reportService: ReportService, private issuesService: IssuesService,private message: NzMessageService) {}
   
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
   saveReport(): void {
     if (!this.repoData || !this.repoData.repoMetadata.id) {
-      console.error('Repository ID is not available');
+      this.message.info('Please fetch issues from a repository');
       return;
     }
     if (!this.user) {
-      console.error('User must be logged in to save report');
+      this.message.info('Please log in to save report');
       return;
     }
-    const reportData = this.spamIssues.map((issue:any) => ({
+    const flaggedIssues = this.spamIssues.map((issue:any) => ({
       issue_id: issue.id,
       username: issue.user.login,
       label: 'spam'
@@ -42,16 +43,12 @@ export class CleanupReportComponent {
       creatorGithubID: this.user.id,
       repoID: this.repoData.repoMetadata.id,
       repoAdminGithubID: this.repoData.repoMetadata.owner.id,
-      reportContent: JSON.stringify(reportData)
+      flaggedissues: JSON.stringify(flaggedIssues)
     };
 
     this.reportService.postReport(report).subscribe(
-      response => {
-        console.log('Report saved successfully', response);
-      },
-      error => {
-        console.error('Error saving report', error);
-      }
+      response => this.message.success('Report saved successfully'),
+      error => this.message.error('Error saving report: ' + error.message)
     );
   }
 

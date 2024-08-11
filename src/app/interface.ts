@@ -11,9 +11,15 @@ export interface User {
     avatar_url: string;
     name: string;
 }
+
+export interface FlaggedIssue {
+    label: string; 
+    issue_id: Number; 
+    username: string
+}
   
 export interface RepoData {
-    issues: any[]; 
+    issues: any; 
     repoMetadata: any;
 }
 

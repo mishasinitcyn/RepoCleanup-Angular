@@ -44,12 +44,12 @@
       </button>
     </div> -->
     <div class="issues-page">
-      <div *ngIf="repoData.issues.length === 0" style="text-align: center;">
+      <div *ngIf="repoData?.issues.length === 0 || !repoData" style="text-align: center;">
         <h2>No issues found.</h2>
       </div>
 
-      <div *ngIf="repoData.issues.length > 0" style="padding: 20px;">
-        <nz-card *ngFor="let issue of repoData.issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showSpamModal(issue, 'remove') : showSpamModal(issue, 'remove')" style="margin-bottom: 20px;">
+      <div *ngIf="repoData?.issues.length > 0" style="padding: 20px;">
+        <nz-card *ngFor="let issue of repoData?.issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showSpamModal(issue, 'remove') : showSpamModal(issue, 'add')" style="margin-bottom: 20px;">
           <h1>{{ issue.title }}</h1>
           <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
           <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
