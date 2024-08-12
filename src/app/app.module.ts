@@ -47,6 +47,7 @@ import { Squiggly1Component } from './assets/squiggly1/squiggly1.component';
 import { Squiggly2Component } from './assets/squiggly2/squiggly2.component';
 import { CallbackComponent } from './callback/callback.component';
 import { CleanupReportComponent } from './cleanup-report/cleanup-report.component';
+import { SharedReportComponent } from './shared-report/shared-report.component';
 
 @NgModule({
   declarations: [
@@ -56,7 +57,8 @@ import { CleanupReportComponent } from './cleanup-report/cleanup-report.componen
     Squiggly1Component,
     Squiggly2Component,
     CallbackComponent,
-    CleanupReportComponent
+    CleanupReportComponent,
+    SharedReportComponent
   ],
   imports: [
     BrowserModule,
