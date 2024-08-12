@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, of } from 'rxjs';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
@@ -28,9 +28,20 @@ export class IssuesService {
     return this.authService.getToken().pipe(
       switchMap(token => {
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-        return this.http.get<RepoData>(`${environment.apiUrl}/github/issues/${owner}/${repo}`, { headers });
+        return this.http.get<RepoData>(`${environment.apiUrl}/github/${owner}/${repo}/issues`, { headers });
       }),
       tap(repoData => this.repoDataSubject.next(repoData))
+    );
+  }
+
+  getIssuesByIssueNumbers(repoid: string, numbers: Number[]): Observable<any[]> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        const params = new HttpParams().set('numbers', numbers.join(','));
+        const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
+        console.log("Get issues by ids params:", params);
+        return this.http.get<any[]>(`${environment.apiUrl}/github/${repoid}/issues`, { params, headers });
+      })
     );
   }
 }

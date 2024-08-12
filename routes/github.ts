@@ -22,7 +22,7 @@ router.post('/callback', async (req, res) => {
 
     // Save user to database
     const saveUserResponse = await axios.post(`${environment.apiUrl}/users`, {
-      githubID: userData.id.toString(),
+      ID: userData.id.toString(),
       username: userData.login,
       email: userData.email
     });
@@ -37,7 +37,7 @@ router.post('/callback', async (req, res) => {
   }
 });
 
-router.get('/issues/:owner/:repo', async (req, res) => {
+router.get('/:owner/:repo/issues', async (req, res) => {
   const { owner, repo } = req.params;
   const token = req.headers.authorization?.split(' ')[1];
   
@@ -62,6 +62,37 @@ router.get('/issues/:owner/:repo', async (req, res) => {
   } catch (error: any) {
     console.error('GitHub API error:', error);
     res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
+  }
+});
+
+router.get('/:repoid/issues', async (req, res) => {
+  const { repoid } = req.params;
+  const { numbers } = req.query;
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!numbers) {
+    return res.status(400).json({ error: 'Issue IDs are required' });
+  }
+  if (!repoid) {
+    return res.status(400).json({ error: 'Repo ID required' });
+  }
+
+  try {
+    const issueNumbersArray = (numbers as string).split(',');
+    const issues = await Promise.all(
+      issueNumbersArray.map(issueNumber => 
+        axios.get(`https://api.github.com/repositories/${repoid}/issues/${issueNumber}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': "application/vnd.github+json",
+          }
+        }).then(response => response.data)
+      )
+    );
+    return res.json(issues);
+  } catch (error: any) {
+    console.error('GitHub API error:', error.response?.data || error.message);
+    return res.status(error.response?.status || 500).json({ error: 'Failed to fetch issues' });
   }
 });
 

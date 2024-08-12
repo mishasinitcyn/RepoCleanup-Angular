@@ -26,9 +26,9 @@
     </thead>
     <tbody>
       <ng-container *ngFor="let issue of spamIssues">
-        <tr [class.expanded]="expandedIssueIds.includes(issue.id)">
+        <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)">
           <td (click)="expandIssue(issue)">{{ issue.title }}</td>
-          <td (click)="expandIssue(issue)">{{ issue.id }}</td>
+          <td (click)="expandIssue(issue)">{{ issue.number }}</td>
           <td (click)="expandIssue(issue)">{{ issue.number }}</td>
           <td (click)="expandIssue(issue)">{{ issue.user.login }}</td>
           <td (click)="expandIssue(issue)">
@@ -42,7 +42,7 @@
             </button>
           </td>
         </tr>
-        <tr *ngIf="expandedIssueIds.includes(issue.id)">
+        <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
           <td colspan="6" class="issue-details">
             <div>
               <p><strong>Body:</strong> {{ issue.body }}</p>

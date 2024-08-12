@@ -4,6 +4,16 @@ import { QueryResult } from 'pg';
 
 const router = express.Router();
 
+interface ReportResponse {
+  reportid: Number;
+  creatorid: String;
+  datecreated: Date;
+  isopen: Boolean;
+  repoid: String;
+  repoownerid: String;
+  flaggedissues: any;
+}
+
 router.get('/:id', async (req, res) => {
   const reportId = parseInt(req.params.id);
   if (isNaN(reportId)) {
@@ -20,15 +30,17 @@ router.get('/:id', async (req, res) => {
     }
 
     const report = result.rows[0];
-    return res.json({
+
+    const response: ReportResponse = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
       isopen: report.isopen,
       repoid: report.repoid,
-      repoadmingithubid: report.repoadmingithubid,
+      repoownerid: report.repoownerid,
       flaggedissues: report.flaggedissues
-    });
+    };
+    return res.json(response);
   } catch (err) {
     console.error('Error fetching report:', err);
     return res.status(500).json({ error: 'An error occurred while fetching the report' });
@@ -54,15 +66,18 @@ router.get('/open/:creatorID/:repoID', async (req, res) => {
     }
 
     const report = result.rows[0];
-    return res.json({
+
+    const response: ReportResponse = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
       isopen: report.isopen,
       repoid: report.repoid,
-      repoadmingithubid: report.repoadmingithubid,
+      repoownerid: report.repoownerid,
       flaggedissues: report.flaggedissues
-    });
+    };
+
+    return res.json(response);
   } catch (err) {
     console.error('Error fetching open report:', err);
     return res.status(500).json({ error: 'An error occurred while fetching the open report' });
@@ -70,8 +85,8 @@ router.get('/open/:creatorID/:repoID', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { creatorGithubID, repoID, repoAdminGithubID, flaggedissues } = req.body;
-  if (!creatorGithubID || !repoID || !repoAdminGithubID || !flaggedissues) {
+  const { creatorID, repoID, repoOwnerID, flaggedissues } = req.body;
+  if (!creatorID || !repoID || !repoOwnerID || !flaggedissues) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
@@ -84,7 +99,7 @@ router.post('/', async (req, res) => {
         dateCreated = CURRENT_TIMESTAMP
       RETURNING reportID;
     `;
-    const values = [creatorGithubID, repoID, repoAdminGithubID, flaggedissues];
+    const values = [creatorID, repoID, repoOwnerID, flaggedissues];
     
     const result = await pool.query(query, values);
     const reportID = result.rows[0].reportid;

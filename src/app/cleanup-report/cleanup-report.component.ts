@@ -12,7 +12,7 @@ export class CleanupReportComponent {
   @Input() repoData: any;
   @Input() user: any | null = null;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
-  expandedIssueIds: number[] = [];
+  expandedIssueNumbers: number[] = [];
 
   get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue)) : []; }
   get totalIssues(): number { return this.repoData ? this.repoData.issues.length : 0; }
@@ -35,7 +35,7 @@ export class CleanupReportComponent {
     }
   
     const flaggedIssues = this.spamIssues.map((issue:any) => ({
-      issue_id: issue.id,
+      number: issue.number,
       username: issue.user.login,
       label: 'spam'
     }));
@@ -49,15 +49,15 @@ export class CleanupReportComponent {
   
   private saveReportData(flaggedIssues: any[]): void {
     const report = {
-      creatorGithubID: this.user.id,
+      creatorID: this.user.id,
       repoID: this.repoData.repoMetadata.id,
-      repoAdminGithubID: this.repoData.repoMetadata.owner.id,
+      repoOwnerID: this.repoData.repoMetadata.owner.id,
       flaggedissues: JSON.stringify(flaggedIssues)
     };
   
     this.reportService.postReport(report).subscribe(
       response => this.message.success('Report saved successfully'),
-      error => this.message.error('Error saving report: ' + error.message)
+      error => this.message.error('Error saving report')
     );
   }
   
@@ -91,11 +91,11 @@ export class CleanupReportComponent {
 
 
   expandIssue(issue: any): void {
-    const index = this.expandedIssueIds.indexOf(issue.id);
+    const index = this.expandedIssueNumbers.indexOf(issue.number);
     if (index === -1) {
-      this.expandedIssueIds.push(issue.id);
+      this.expandedIssueNumbers.push(issue.number);
     } else {
-      this.expandedIssueIds.splice(index, 1);
+      this.expandedIssueNumbers.splice(index, 1);
     }
   }
 
@@ -128,7 +128,6 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
 
   ${this.spamIssues.map(issue => `
   ### Issue #${issue.number}: ${issue.title}
-  - **ID**: ${issue.id}
   - **Username**: ${issue.user.login}
   - **Date**: ${issue.created_at}
   - **Labels**: ${issue.labels.map((l: any) => l.name).join(', ')}

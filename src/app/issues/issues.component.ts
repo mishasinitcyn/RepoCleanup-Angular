@@ -76,7 +76,7 @@ export class IssuesComponent implements OnInit {
   updateIssuesWithSpamLabels(IssueLabels: IssueLabel[]): void {
     IssueLabels.forEach(IssueLabel => {
       if (IssueLabel.label.toLowerCase() === 'spam') {
-        const issue = this.repoData.issues.find((issue: any) => issue.id === IssueLabel.id);
+        const issue = this.repoData.issues.find((issue: any) => issue.number === IssueLabel.number);
         if (issue) {
           issue.labels = issue.labels || [];
           if (!issue.labels.some((label: any) => label.name === 'spam')) {
@@ -125,7 +125,7 @@ export class IssuesComponent implements OnInit {
 
   applyExistingReportLabels(flaggedIssues: any[]): void {
     flaggedIssues.forEach((flaggedIssue: FlaggedIssue) => {
-      const issue = this.repoData.issues.find((issue: any) => issue.id === flaggedIssue.issue_id);
+      const issue = this.repoData.issues.find((issue: any) => issue.number === flaggedIssue.number);
       if (issue) {
         this.addSpamLabel(issue);
       }
