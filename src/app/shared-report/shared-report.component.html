@@ -1,3 +1,50 @@
-<ng-container *ngIf="report">
-    <app-cleanup-report [repoData]="{repoMetadata: '', issues: issues}"></app-cleanup-report>
-</ng-container>
+<app-layout>
+  <div class="cleanup-report">
+    <!-- Cleanup report content here -->
+        <nz-table [nzData]="spamIssues">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>ID</th>
+              <th>Number</th>
+              <th>Username</th>
+              <th>Labels</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let issue of spamIssues">
+              <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)">
+                <td (click)="expandIssue(issue)">{{ issue.title }}</td>
+                <td (click)="expandIssue(issue)">{{ issue.number }}</td>
+                <td (click)="expandIssue(issue)">{{ issue.number }}</td>
+                <td (click)="expandIssue(issue)">{{ issue.user.login }}</td>
+                <td (click)="expandIssue(issue)">
+                  <nz-tag *ngFor="let label of issue.labels">
+                    {{ label.name }}
+                  </nz-tag>
+                </td>
+                <td>
+                  <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label">
+                    <span nz-icon nzType="minus" nzTheme="outline"></span>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
+                <td colspan="6" class="issue-details">
+                  <div>
+                    <p><strong>Body:</strong> {{ issue.body }}</p>
+                    <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </nz-table>
+      
+        <!-- <div class="download-buttons" *ngIf="repoData">
+          <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()"><i nz-icon nzType="file-markdown" nzTheme="outline"></i>Download Report</button>
+          <button nz-button nzType="primary" nzSize="small" (click)="saveReport()"><i nz-icon nzType="save" nzTheme="outline"></i>Save Report</button>
+        </div> -->
+      </div>
+    </app-layout>

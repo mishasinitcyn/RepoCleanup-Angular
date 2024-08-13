@@ -21,17 +21,13 @@ export class IssuesComponent implements OnInit {
   repoData: any;
   loadingClassification = false;
   isLoggedIn = false;
-  user$: Observable<any>;
-  currentUser: any | null = null;
   selectedTabIndex = 0;
 
   constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
-    this.user$ = this.authService.getUser();
-    this.user$.subscribe(user => this.currentUser = user);
   }
 
   ngOnInit(): void {
-    this.initializeUserAndRepoData();
+    this.initializeRepoData();
     this.checkLoginStatus();
   }
 
@@ -52,8 +48,8 @@ export class IssuesComponent implements OnInit {
     this.notification.template(this.githubNotification, {
       nzData: { title: 'GitHub Login', content: 'Please log in for full functionality' },
       nzPlacement: 'topRight',
-      nzCloseIcon: undefined,
-      nzDuration: 0
+      nzCloseIcon: ' ' as string,
+      nzDuration: 2000
     });
   }
 
@@ -133,28 +129,30 @@ export class IssuesComponent implements OnInit {
     this.sortIssues();
   }
 
-  private initializeUserAndRepoData(): void {
-    combineLatest([
-      this.user$,
-      this.issuesService.getRepoData()
-    ]).pipe(
-      tap(this.updateUserAndRepoData.bind(this)),
+  private initializeRepoData(): void {
+    this.issuesService.getRepoData().pipe(
+      tap(this.updateRepoData.bind(this)),
       switchMap(this.fetchOpenReport.bind(this))
     ).subscribe(this.handleOpenReportResponse.bind(this));
   }
   
-  private updateUserAndRepoData([user, repoData]: [any, any]): void {
-    this.currentUser = user;
+  private updateRepoData(repoData: any): void {
     this.repoData = repoData;
   }
   
-  private fetchOpenReport([user, repoData]: [any, any]): Observable<any> {
-    if (user && repoData) {
-      return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
+  private fetchOpenReport(repoData: any): Observable<any> {
+    if (repoData) {
+      return this.authService.getUser().pipe(
+        switchMap(user => {
+          if (user) {
+            return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
+          }
+          return of({ exists: false, report: null });
+        })
+      );
     }
     return of({ exists: false, report: null });
   }
-  
   private handleOpenReportResponse(response: { exists: boolean, report: any }): void {
     if (response.exists && response.report) {
       this.message.success("Existing report imported");

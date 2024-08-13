@@ -2,6 +2,9 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ReportService } from '../report.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { AuthService } from '../auth.service';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -10,7 +13,6 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 })
 export class CleanupReportComponent {
   @Input() repoData: any;
-  @Input() user: any | null = null;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
   expandedIssueNumbers: number[] = [];
 
@@ -19,8 +21,7 @@ export class CleanupReportComponent {
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService) {}
-  
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService) {}
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
@@ -29,45 +30,55 @@ export class CleanupReportComponent {
       this.message.info('Please fetch issues from a repository');
       return;
     }
-    if (!this.user) {
-      this.message.info('Please log in to save report');
-      return;
-    }
-  
-    const flaggedIssues = this.spamIssues.map((issue:any) => ({
-      number: issue.number,
-      username: issue.user.login,
-      label: 'spam'
-    }));
-  
-    if (flaggedIssues.length === 0) {
-      this.showDeleteConfirmation();
-    } else {
-      this.saveReportData(flaggedIssues);
-    }
+
+    this.authService.getUser().pipe(
+      switchMap(user => {
+        if (!user) {
+          this.message.info('Please log in to save report');
+          return of(null);
+        }
+
+        const flaggedIssues = this.spamIssues.map((issue:any) => ({
+          number: issue.number,
+          username: issue.user.login,
+          label: 'spam'
+        }));
+
+        if (flaggedIssues.length === 0) {
+          this.showDeleteConfirmation(user.id);
+          return of(null);
+        } else {
+          return this.saveReportData(flaggedIssues, user.id);
+        }
+      })
+    ).subscribe();
   }
   
-  private saveReportData(flaggedIssues: any[]): void {
+  private saveReportData(flaggedIssues: any[], userId: string): any {
     const report = {
-      creatorID: this.user.id,
+      creatorID: userId,
       repoID: this.repoData.repoMetadata.id,
       repoOwnerID: this.repoData.repoMetadata.owner.id,
       flaggedissues: JSON.stringify(flaggedIssues)
     };
   
     this.reportService.postReport(report).subscribe(
-      response => this.message.success('Report saved successfully'),
-      error => this.message.error('Error saving report')
+      response => {
+        this.message.success('Report saved successfully');
+      },
+      error => {
+        this.message.error('Error saving report');
+      }
     );
   }
   
-  private showDeleteConfirmation(): void {
+  private showDeleteConfirmation(userId: string): void {
     this.modal.confirm({
       nzTitle: 'Delete Report',
       nzContent: 'This will delete the existing report. Are you sure?',
       nzOkText: 'Yes',
       nzCancelText: 'No',
-      nzOnOk: () => this.deleteReport(),
+      nzOnOk: () => this.deleteReport(userId),
       nzBodyStyle: {
         backgroundColor: 'black',
         color: 'white'
@@ -76,8 +87,8 @@ export class CleanupReportComponent {
     });
   }
   
-  private deleteReport(): void {
-    this.reportService.deleteReport(this.user.id, this.repoData.repoMetadata.id).subscribe(
+  private deleteReport(userId: string): void {
+    this.reportService.deleteReport(userId, this.repoData.repoMetadata.id).subscribe(
       response => {
         if (response.message === 'No report found to delete') {
           this.message.info('No existing report found to delete');
@@ -85,7 +96,7 @@ export class CleanupReportComponent {
           this.message.success('Report deleted successfully');
         }
       },
-      error => this.message.error('Error deleting report: ' + error.message)
+      error => this.message.error('Error deleting report')
     );
   }
 

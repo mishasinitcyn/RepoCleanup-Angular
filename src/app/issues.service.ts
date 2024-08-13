@@ -39,7 +39,6 @@ export class IssuesService {
       switchMap(token => {
         const params = new HttpParams().set('numbers', numbers.join(','));
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-        console.log("Get issues by ids params:", params);
         return this.http.get<any[]>(`${environment.apiUrl}/github/${repoid}/issues`, { params, headers });
       })
     );

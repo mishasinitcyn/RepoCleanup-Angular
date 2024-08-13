@@ -19,6 +19,10 @@ export class AuthService {
       this.setToken(token);
     }
   }
+  
+  getToken = (): Observable<string | null> => this.tokenSubject.asObservable();
+  isAuthenticated = (): boolean => !!this.tokenSubject.value;
+  getUser = (): Observable<any | null> => this.userSubject.asObservable();
 
   login(): void {
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${environment.githubClientId}&redirect_uri=${environment.githubRedirectUri}&scope=repo`;
@@ -47,18 +51,6 @@ export class AuthService {
     this.tokenSubject.next(token);
     this.octokit = new Octokit({ auth: token });
     this.fetchUser();
-  }
-
-  getToken(): Observable<string | null> {
-    return this.tokenSubject.asObservable();
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.tokenSubject.value;
-  }
-
-  getUser(): Observable<User | null> {
-    return this.userSubject.asObservable();
   }
 
   private fetchUser(): void {
