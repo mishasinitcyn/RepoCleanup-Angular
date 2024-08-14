@@ -2,6 +2,7 @@ import express from 'express';
 import axios from 'axios';
 import { Octokit } from '@octokit/rest';
 import { environment } from '../src/environments/environment';
+import { createOAuthAppAuth } from "@octokit/auth-oauth-app";
 
 const router = express.Router();
 
@@ -42,7 +43,19 @@ router.get('/:owner/:repo/issues', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   
   try {
-    const octokit = new Octokit({ auth: token });
+    let octokit;
+    
+    if (token) {
+      octokit = new Octokit({ auth: token });
+    } else {
+      octokit = new Octokit({
+        auth: {
+          clientId: environment.githubClientId,
+          clientSecret: environment.githubClientSecret,
+        },
+        authStrategy: createOAuthAppAuth,
+      });
+    }
     
     // Fetch repository information
     const { data: repoMetadata } = await octokit.repos.get({ owner, repo });
@@ -70,25 +83,34 @@ router.get('/:repoid/issues', async (req, res) => {
   const { numbers } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
   
-  if (!numbers) {
-    return res.status(400).json({ error: 'Issue IDs are required' });
-  }
-  if (!repoid) {
-    return res.status(400).json({ error: 'Repo ID required' });
-  }
+  if (!numbers) return res.status(400).json({ error: 'Issue IDs are required' });
+  if (!repoid) return res.status(400).json({ error: 'Repo ID required' });
 
   try {
     const issueNumbersArray = (numbers as string).split(',');
+    
+    let octokit;
+    if (token) {
+      octokit = new Octokit({ auth: token });
+    } else {
+      octokit = new Octokit({
+        auth: {
+          clientId: environment.githubClientId,
+          clientSecret: environment.githubClientSecret,
+        },
+        authStrategy: createOAuthAppAuth,
+      });
+    }
+
     const issues = await Promise.all(
       issueNumbersArray.map(issueNumber => 
-        axios.get(`https://api.github.com/repositories/${repoid}/issues/${issueNumber}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': "application/vnd.github+json",
-          }
+        octokit.request('GET /repositories/{repo_id}/issues/{issue_number}', {
+          repo_id: repoid,
+          issue_number: issueNumber
         }).then(response => response.data)
       )
     );
+
     return res.json(issues);
   } catch (error: any) {
     console.error('GitHub API error:', error.response?.data || error.message);
