@@ -14,11 +14,25 @@ export class CallbackComponent implements OnInit {
       const code = params['code'];
       if (code) {
         this.authService.handleCallback(code).subscribe(
-          response => this.authService.setToken(response.access_token),
-          error => this.message.error('Authentication failed')
+          response => {
+            this.authService.setToken(response.access_token);
+            this.navigateBack();
+          },
+          error => {
+            this.message.error('Authentication failed');
+            this.navigateBack();
+          }
         );
+      } else {
+        this.navigateBack();
       }
-      this.router.navigate(['/landing']);
     });
+  }
+
+  private navigateBack() {
+    const redirectUrl = localStorage.getItem('github_login_redirect') || '/landing';
+    console.log("navigate back", redirectUrl)
+    localStorage.removeItem('github_login_redirect');
+    this.router.navigateByUrl(redirectUrl);
   }
 }

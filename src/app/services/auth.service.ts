@@ -25,6 +25,8 @@ export class AuthService {
   getUser = (): Observable<any | null> => this.userSubject.asObservable();
 
   login(): void {
+    const currentRoute = window.location.pathname + window.location.search + window.location.hash;
+    localStorage.setItem('github_login_redirect', currentRoute);
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${environment.githubClientId}&redirect_uri=${environment.githubRedirectUri}&scope=repo`;
     window.location.href = githubAuthUrl;
   }
