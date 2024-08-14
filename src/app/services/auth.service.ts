@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, tap } from 'rxjs';
-import { environment } from '../environments/environment';
-import { User } from './interface';
+import { environment } from '../../environments/environment';
+import { User } from '../core/interface';
 import { Octokit } from '@octokit/rest';
 
 @Injectable({

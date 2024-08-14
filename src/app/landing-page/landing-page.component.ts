@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { IssuesService } from '../issues.service';
-import { AuthService } from '../auth.service';
+import { IssuesService } from '../services/issues.service';
+import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -37,7 +37,8 @@ export class LandingPageComponent {
   }
 
   fetchIssues_mock(): void {
-    this.issuesService.fetchIssues('mock', 'repo').subscribe(
+    console.log("FETCH ISSUES MOCK")
+    this.issuesService.fetchIssues('mock', 'mock').subscribe(
       () => this.router.navigate(['/issues']),
       error => console.error('Error setting mock issues', error)
     );

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LandingPageComponent } from './landing-page/landing-page.component';
 import { IssuesComponent } from './issues/issues.component';
-import { CallbackComponent } from './callback/callback.component';
+import { CallbackComponent } from './assets/callback/callback.component';
 import { AuthGuard } from './auth.guard';
 import { SharedReportComponent } from './shared-report/shared-report.component';
 

@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ReportService } from '../report.service';
+import { ReportService } from '../services/report.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 

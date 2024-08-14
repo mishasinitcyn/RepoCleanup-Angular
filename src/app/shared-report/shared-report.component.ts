@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ReportService } from '../report.service';
-import { IssuesService } from '../issues.service';
+import { ReportService } from '../services/report.service';
+import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
 
 @Component({

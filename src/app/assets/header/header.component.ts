@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AuthService } from '../auth.service';
-import { User } from '../interface';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../core/interface';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.less']
 })
 export class HeaderComponent implements OnInit {
   user$: Observable<User | null>;

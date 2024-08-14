@@ -1,12 +1,12 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { IssuesService } from '../issues.service';
-import { ReportService } from '../report.service';
-import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../interface';
+import { IssuesService } from '../services/issues.service';
+import { ReportService } from '../services/report.service';
+import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../core/interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import { Observable, combineLatest, of } from 'rxjs';
 import { switchMap, tap, catchError } from 'rxjs/operators';
 
@@ -17,14 +17,12 @@ import { switchMap, tap, catchError } from 'rxjs/operators';
 })
 export class IssuesComponent implements OnInit {
   @ViewChild('githubNotification', { static: true }) githubNotification!: TemplateRef<{}>;
-
   repoData: any;
   loadingClassification = false;
   isLoggedIn = false;
   selectedTabIndex = 0;
 
-  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
-  }
+  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {}
 
   ngOnInit(): void {
     this.initializeRepoData();

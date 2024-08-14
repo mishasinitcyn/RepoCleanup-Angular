@@ -3,9 +3,9 @@ import { Observable, BehaviorSubject, of } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { switchMap, tap } from 'rxjs/operators';
-import { environment } from '../environments/environment';
-import { RepoData } from './interface';
-import { mockIssues } from './assets/mockIssues';
+import { environment } from '../../environments/environment';
+import { RepoData } from '../core/interface';
+import { mockIssues } from '../assets/mockIssues';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +19,9 @@ export class IssuesService {
   getRepoData = (): Observable<RepoData | null> => this.repoDataSubject.asObservable();
 
   fetchIssues(owner: string, repo: string): Observable<RepoData> {
-    if (owner === 'mock' && repo === 'admin') {
+    console.log(owner, repo)
+    if (owner === 'mock' && repo === 'mock') {
+      console.log("MOCK RETURN")
       return of(mockIssues as RepoData).pipe(
         tap(repoData => this.repoDataSubject.next(repoData))
       );
