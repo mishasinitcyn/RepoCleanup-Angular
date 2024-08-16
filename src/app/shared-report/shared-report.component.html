@@ -1,50 +1,84 @@
 <app-layout>
-  <div class="cleanup-report">
-    <!-- Cleanup report content here -->
-    <nz-table *ngIf="repoData" [nzData]="repoData?.issues">
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>ID</th>
-          <th>Number</th>
-          <th>Username</th>
-          <th>Labels</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let issue of repoData?.issues">
-          <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)">
-            <td (click)="expandIssue(issue)">{{ issue.title }}</td>
-            <td (click)="expandIssue(issue)">{{ issue.number }}</td>
-            <td (click)="expandIssue(issue)">{{ issue.number }}</td>
-            <td (click)="expandIssue(issue)">{{ issue.user.login }}</td>
-            <td (click)="expandIssue(issue)">
-              <nz-tag *ngFor="let label of issue.labels">
-                {{ label.name }}
-              </nz-tag>
-            </td>
-            <td>
-              <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label">
-                <span nz-icon nzType="minus" nzTheme="outline"></span>
-              </button>
-            </td>
+  <div class="shared-report" *ngIf="repoData">
+    <article nz-typography>
+      <div class="repo-title">
+        <h1 nz-typography>{{repoData.repoMetadata.full_name}}</h1>
+        <a nz-button nzType="link" [href]="repoData.repoMetadata.html_url" target="_blank">
+          <span nz-icon nzType="github" nzTheme="outline"></span>
+        </a>
+      </div>
+      <p nz-typography>
+        The issues below have been flagged as potential spam.
+        If you are the project owner, you may close spam issues, unflag valid issues, and ban users
+      </p>
+    </article>
+
+    <nz-card nzTitle="Flagged Issues">
+      <nz-table [nzData]="repoData?.issues">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Number</th>
+            <th>Username</th>
+            <th>Labels</th>
+            <th>Actions</th>
           </tr>
-          <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
-            <td colspan="6" class="issue-details">
-              <div>
-                <p><strong>Body:</strong> {{ issue.body }}</p>
-                <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
-              </div>
-            </td>
-          </tr>
-        </ng-container>
-      </tbody>
-    </nz-table>
-  
-    <!-- <div class="download-buttons" *ngIf="repoData">
-      <button nz-button nzType="primary" nzSize="small" (click)="downloadMarkdownReport()"><i nz-icon nzType="file-markdown" nzTheme="outline"></i>Download Report</button>
-      <button nz-button nzType="primary" nzSize="small" (click)="saveReport()"><i nz-icon nzType="save" nzTheme="outline"></i>Save Report</button>
-    </div> -->
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let issue of repoData?.issues">
+            <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)">
+              <td (click)="expandIssue(issue)">{{ issue.title }}</td>
+              <td (click)="expandIssue(issue)">#{{ issue.number }}</td>
+              <td (click)="expandIssue(issue)">{{ issue.user.login }}</td>
+              <td (click)="expandIssue(issue)">
+                <nz-tag *ngFor="let label of issue.labels">
+                  {{ label.name }}
+                </nz-tag>
+              </td>
+              <td>
+                <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="unflagIssue(issue)">
+                  <span nz-icon nzType="minus" nzTheme="outline"></span>
+                </button>
+                <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Close issue" (click)="closeIssue(issue)">
+                  <span nz-icon nzType="close" nzTheme="outline"></span>
+                </button>
+                <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Ban user" (click)="banUser(issue)">
+                  <span nz-icon nzType="user-delete" nzTheme="outline"></span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
+              <td colspan="5" class="issue-details">
+                <div>
+                  <p><strong>Body:</strong> {{ issue.body }}</p>
+                  <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </nz-table>
+      <div class="download-buttons" *ngIf="repoData">
+        <button nz-button nzType="default" nzSize="small"><i nz-icon nzType="file-markdown" nzTheme="outline"></i>Download Report</button>
+        <button nz-button nzType="default" nzSize="small"><i nz-icon nzType="save" nzTheme="outline"></i>Save Report</button>
+      </div>
+    </nz-card>
+
+    <nz-card nzTitle="Recommended Actions" class="recommended-actions">
+      <p>Consider implementing these GitHub Actions to improve your repository's security and workflow:</p>
+      <nz-list [nzDataSource]="recommendedActions" nzItemLayout="horizontal">
+        <nz-list-item *ngFor="let action of recommendedActions">
+          <nz-list-item-meta
+            [nzAvatar]="avatarTemplate"
+            [nzTitle]="action.name"
+            [nzDescription]="action.description"
+          >
+            <ng-template #avatarTemplate>
+              <span nz-icon [nzType]="action.icon" nzTheme="outline"></span>
+            </ng-template>
+          </nz-list-item-meta>
+        </nz-list-item>
+      </nz-list>
+    </nz-card>
   </div>
-  </app-layout>
+</app-layout>

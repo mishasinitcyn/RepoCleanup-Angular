@@ -17,7 +17,7 @@ export class SharedReportComponent implements OnInit {
   repoData: any;
   expandedIssueNumbers: number[] = [];
   recommendedActions = [
-    { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "shield" },
+    { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
     { name: "Require PR Approvals", description: "Set up a rule to require 2 approvals for PRs", icon: "team" },
     { name: "Add Templates", description: "Create templates for Issues and Pull Requests", icon: "file-text" },
   ];
@@ -52,6 +52,7 @@ export class SharedReportComponent implements OnInit {
       next: ({ repoMetadata, issues }) => {
         this.repoData = { repoMetadata, issues };
         this.applySpamLabels();
+        console.log(this.repoData)
       },
       error: (error) => {
         if (error.message === 'No report found') {

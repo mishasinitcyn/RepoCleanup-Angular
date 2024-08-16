@@ -11,7 +11,8 @@ const routes: Routes = [
   { path: 'landing', component: LandingPageComponent },
   { path: 'issues', component: IssuesComponent}, //, canActivate: [AuthGuard] },
   { path: 'callback', component: CallbackComponent},
-  { path: 'report/:reportID', component: SharedReportComponent}
+  { path: 'report/:reportID', component: SharedReportComponent},
+  { path: '**', component: LandingPageComponent }
 ];
 
 @NgModule({
