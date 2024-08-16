@@ -5,6 +5,7 @@ import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-shared-report',
@@ -37,28 +38,26 @@ export class SharedReportComponent implements OnInit {
   login = () => this.authService.login();
 
   fetchReport(): void {
-    this.reportService.getReport(parseInt(this.reportID)).subscribe(
-      (report) => {
+    this.reportService.getReport(parseInt(this.reportID)).pipe(
+      switchMap(report => {
         this.report = report;
-        this.fetchFlaggedIssues();
-      },
-      (error) => this.message.error("Couldn't find the report by given id. It may have been closed or deleted.")
-    );
-  }
-
-  fetchFlaggedIssues(): void {
-    if (!this.report || !this.report.flaggedissues) {
-      return;
-    }
-  
-    const numbers = this.report.flaggedissues.map((issue: any) => issue.number);
-
-    this.issuesService.getIssuesByIssueNumbers(this.report.repoid, numbers).subscribe(
-      (issues) => {
+        return this.issuesService.getRepoMetadataByID(report.repoid);
+      }),
+      switchMap(repoMetadata => {
+        const owner = repoMetadata.owner.login;
+        const repo = repoMetadata.name;
+        const numbers = this.report.flaggedissues.map((issue: any) => issue.number);
+        
+        return this.issuesService.getIssuesByIssueNumbers(owner, repo, numbers).pipe(
+          map(issues => ({ repoMetadata, issues }))
+        );
+      }),
+    ).subscribe(
+      ({ issues }) => {
         this.spamIssues = issues;
         this.applySpamLabels();
       },
-      (error) => this.message.error("Couldn't fetch issues from Github")
+      (error) => {this.message.error("Couldn't fetch report.");}
     );
   }
   

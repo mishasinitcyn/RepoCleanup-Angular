@@ -29,7 +29,6 @@ export class LandingPageComponent {
     }
 
     const [owner, repo] = repoPath.split('/');
-
     this.issuesService.fetchRepoData(owner, repo).subscribe(
       repoData => this.router.navigate(['/issues']),
       error => alert('Error fetching repository data')

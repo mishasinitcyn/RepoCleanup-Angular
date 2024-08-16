@@ -34,7 +34,7 @@ router.get('/:owner/:repo/metadata', async (req, res) => {
   }
 });
 
-router.get('/repo/:repoid/metadata', async (req, res) => {
+router.get('/:repoid/metadata', async (req, res) => {
   const { repoid } = req.params;
   const token = req.headers.authorization?.split(' ')[1];
   
@@ -57,7 +57,6 @@ router.get('/repo/:repoid/metadata', async (req, res) => {
     const { data: repoMetadata } = await octokit.request('GET /repositories/{repo_id}', {
       repo_id: repoid
     });
-
     return res.json(repoMetadata);
   } catch (error: any) {
     console.error('GitHub API error:', error.response?.data || error.message);
@@ -84,32 +83,23 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       });
     }
     
-    // Fetch issues
-    const { data: issues } = await octokit.issues.listForRepo({
-      owner,
-      repo,
-      per_page: token ? 30 : 10,
-      state: 'open'
-    });
-
-    res.json(issues);
+    const { data: issues } = await octokit.issues.listForRepo({owner, repo, per_page: token ? 30 : 10, state: 'open'});
+    return res.json(issues);
   } catch (error: any) {
     console.error('GitHub API error:', error);
-    res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
+    return res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
   }
 });
 
-router.get('/:repoid/issues/numbers', async (req, res) => {
-  const { repoid } = req.params;
+router.get('/:owner/:repo/issues/numbers', async (req, res) => {
+  const { owner, repo } = req.params;
   const { numbers } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
   
-  if (!numbers) return res.status(400).json({ error: 'Issue IDs are required' });
-  if (!repoid) return res.status(400).json({ error: 'Repo ID required' });
+  if (!numbers) return res.status(400).json({ error: 'Issue numbers are required' });
 
   try {
     const issueNumbersArray = (numbers as string).split(',');
-    
     let octokit;
     if (token) {
       octokit = new Octokit({ auth: token });
@@ -125,13 +115,11 @@ router.get('/:repoid/issues/numbers', async (req, res) => {
 
     const issues = await Promise.all(
       issueNumbersArray.map(issueNumber => 
-        octokit.request('GET /repositories/{repo_id}/issues/{issue_number}', {
-          repo_id: repoid,
-          issue_number: issueNumber
-        }).then(response => response.data)
+        octokit.issues.get({owner,repo, issue_number: parseInt(issueNumber)}).then(
+          response => response.data
+        )
       )
     );
-
     return res.json(issues);
   } catch (error: any) {
     console.error('GitHub API error:', error.response?.data || error.message);
@@ -161,13 +149,13 @@ router.post('/callback', async (req, res) => {
       email: userData.email
     });
 
-    res.json({ 
+    return res.json({ 
       access_token: response.data.access_token,
       user: saveUserResponse.data 
     });
   } catch (error) {
     console.error('GitHub OAuth error:', error);
-    res.status(500).json({ error: 'Failed to authenticate' });
+    return res.status(500).json({ error: 'Failed to authenticate' });
   }
 });
 
