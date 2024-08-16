@@ -4,7 +4,6 @@ import { ReportService } from '../services/report.service';
 import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../services/auth.service';
-import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 @Component({
@@ -15,9 +14,7 @@ import { map, switchMap } from 'rxjs/operators';
 export class SharedReportComponent implements OnInit {
   reportID: string;
   report: any;
-  user$: Observable<any>;
-  currentUser: any | null = null;
-  spamIssues: any[] = [];
+  repoData: any;
   expandedIssueNumbers: number[] = [];
   recommendedActions = [
     { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "shield" },
@@ -27,21 +24,20 @@ export class SharedReportComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private message: NzMessageService, private authService: AuthService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
-    this.user$ = this.authService.getUser();
-    this.user$.subscribe(user => this.currentUser = user);
   }
 
   ngOnInit(): void {
     this.fetchReport();
   }
 
-  login = () => this.authService.login();
-
   fetchReport(): void {
     this.reportService.getReport(parseInt(this.reportID)).pipe(
-      switchMap(report => {
-        this.report = report;
-        return this.issuesService.getRepoMetadataByID(report.repoid);
+      switchMap(response => {
+        if (response.message === 'No report found') {
+          throw new Error('No report found');
+        }
+        this.report = response;
+        return this.issuesService.getRepoMetadataByID(this.report.repoid);
       }),
       switchMap(repoMetadata => {
         const owner = repoMetadata.owner.login;
@@ -52,17 +48,23 @@ export class SharedReportComponent implements OnInit {
           map(issues => ({ repoMetadata, issues }))
         );
       }),
-    ).subscribe(
-      ({ issues }) => {
-        this.spamIssues = issues;
+    ).subscribe({
+      next: ({ repoMetadata, issues }) => {
+        this.repoData = { repoMetadata, issues };
         this.applySpamLabels();
       },
-      (error) => {this.message.error("Couldn't fetch report.");}
-    );
+      error: (error) => {
+        if (error.message === 'No report found') {
+          this.message.error('No report found with the given ID.');
+        } else {
+          this.message.error('An error occurred while fetching the report data.');
+        }
+      }
+    });
   }
   
   applySpamLabels(): void {
-    this.spamIssues.forEach(issue => {
+    this.repoData.issues.forEach((issue:any) => {
       const flaggedIssue = this.report.flaggedissues.find((fi: any) => fi.number === issue.number);
       if (flaggedIssue) {
         issue.labels = issue.labels || [];

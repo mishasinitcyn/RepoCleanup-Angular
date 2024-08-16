@@ -26,7 +26,7 @@ router.get('/:id', async (req, res) => {
     `;
     const result = await pool.query(query, [reportId]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Report not found' });
+      return res.status(204).json({ error: 'Report not found' });
     }
 
     const report = result.rows[0];
