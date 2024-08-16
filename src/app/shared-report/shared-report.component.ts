@@ -48,7 +48,6 @@ export class SharedReportComponent implements OnInit {
 
   fetchFlaggedIssues(): void {
     if (!this.report || !this.report.flaggedissues) {
-      console.error('No flagged issues found in the report');
       return;
     }
   

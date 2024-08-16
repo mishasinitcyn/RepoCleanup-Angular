@@ -31,7 +31,6 @@ export class CallbackComponent implements OnInit {
 
   private navigateBack() {
     const redirectUrl = localStorage.getItem('github_login_redirect') || '/landing';
-    console.log("navigate back", redirectUrl)
     localStorage.removeItem('github_login_redirect');
     this.router.navigateByUrl(redirectUrl);
   }

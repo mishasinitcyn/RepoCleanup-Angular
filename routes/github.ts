@@ -6,35 +6,62 @@ import { createOAuthAppAuth } from "@octokit/auth-oauth-app";
 
 const router = express.Router();
 
-router.post('/callback', async (req, res) => {
-  const { code } = req.body;
+router.get('/:owner/:repo/metadata', async (req, res) => {
+  const { owner, repo } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+  
   try {
-    const response = await axios.post('https://github.com/login/oauth/access_token', {
-      client_id: environment.githubClientId,
-      client_secret: environment.githubClientSecret,
-      code,
-    }, {
-      headers: {
-        Accept: 'application/json'
-      }
-    });
-    const octokit = new Octokit({ auth: response.data.access_token });
-    const { data: userData } = await octokit.users.getAuthenticated();
+    let octokit;
+    
+    if (token) {
+      octokit = new Octokit({ auth: token });
+    } else {
+      octokit = new Octokit({
+        auth: {
+          clientId: environment.githubClientId,
+          clientSecret: environment.githubClientSecret,
+        },
+        authStrategy: createOAuthAppAuth,
+      });
+    }
+    
+    const { data: repoMetadata } = await octokit.repos.get({ owner, repo });
 
-    // Save user to database
-    const saveUserResponse = await axios.post(`${environment.apiUrl}/users`, {
-      ID: userData.id.toString(),
-      username: userData.login,
-      email: userData.email
+    res.json(repoMetadata);
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    res.status(error.status || 500).json({ error: 'Failed to fetch repository metadata' });
+  }
+});
+
+router.get('/repo/:repoid/metadata', async (req, res) => {
+  const { repoid } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!repoid) return res.status(400).json({ error: 'Repo ID required' });
+
+  try {
+    let octokit;
+    if (token) {
+      octokit = new Octokit({ auth: token });
+    } else {
+      octokit = new Octokit({
+        auth: {
+          clientId: environment.githubClientId,
+          clientSecret: environment.githubClientSecret,
+        },
+        authStrategy: createOAuthAppAuth,
+      });
+    }
+
+    const { data: repoMetadata } = await octokit.request('GET /repositories/{repo_id}', {
+      repo_id: repoid
     });
 
-    res.json({ 
-      access_token: response.data.access_token,
-      user: saveUserResponse.data 
-    });
-  } catch (error) {
-    console.error('GitHub OAuth error:', error);
-    res.status(500).json({ error: 'Failed to authenticate' });
+    return res.json(repoMetadata);
+  } catch (error: any) {
+    console.error('GitHub API error:', error.response?.data || error.message);
+    return res.status(error.response?.status || 500).json({ error: 'Failed to fetch repository metadata' });
   }
 });
 
@@ -57,9 +84,6 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       });
     }
     
-    // Fetch repository information
-    const { data: repoMetadata } = await octokit.repos.get({ owner, repo });
-    
     // Fetch issues
     const { data: issues } = await octokit.issues.listForRepo({
       owner,
@@ -68,17 +92,14 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       state: 'open'
     });
 
-    res.json({
-      repoMetadata: repoMetadata,
-      issues: issues
-    });
+    res.json(issues);
   } catch (error: any) {
     console.error('GitHub API error:', error);
     res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
   }
 });
 
-router.get('/:repoid/issues', async (req, res) => {
+router.get('/:repoid/issues/numbers', async (req, res) => {
   const { repoid } = req.params;
   const { numbers } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
@@ -115,6 +136,38 @@ router.get('/:repoid/issues', async (req, res) => {
   } catch (error: any) {
     console.error('GitHub API error:', error.response?.data || error.message);
     return res.status(error.response?.status || 500).json({ error: 'Failed to fetch issues' });
+  }
+});
+
+router.post('/callback', async (req, res) => {
+  const { code } = req.body;
+  try {
+    const response = await axios.post('https://github.com/login/oauth/access_token', {
+      client_id: environment.githubClientId,
+      client_secret: environment.githubClientSecret,
+      code,
+    }, {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+    const octokit = new Octokit({ auth: response.data.access_token });
+    const { data: userData } = await octokit.users.getAuthenticated();
+
+    // Save user to database
+    const saveUserResponse = await axios.post(`${environment.apiUrl}/users`, {
+      ID: userData.id.toString(),
+      username: userData.login,
+      email: userData.email
+    });
+
+    res.json({ 
+      access_token: response.data.access_token,
+      user: saveUserResponse.data 
+    });
+  } catch (error) {
+    console.error('GitHub OAuth error:', error);
+    res.status(500).json({ error: 'Failed to authenticate' });
   }
 });
 

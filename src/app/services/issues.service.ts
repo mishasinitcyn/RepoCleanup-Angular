@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Observable, BehaviorSubject, of } from 'rxjs';
+import { Observable, BehaviorSubject, of, forkJoin } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
-import { switchMap, tap } from 'rxjs/operators';
+import { switchMap, tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { RepoData } from '../core/interface';
 import { mockIssues } from '../assets/mockIssues';
@@ -18,10 +18,8 @@ export class IssuesService {
   sendIssues = (issues: any[]): Observable<any> => this.http.post(`${environment.fastApiUrl}/classify_spam`, issues);
   getRepoData = (): Observable<RepoData | null> => this.repoDataSubject.asObservable();
 
-  fetchIssues(owner: string, repo: string): Observable<RepoData> {
-    console.log(owner, repo)
+  fetchRepoData(owner: string, repo: string): Observable<RepoData> {
     if (owner === 'mock' && repo === 'mock') {
-      console.log("MOCK RETURN")
       return of(mockIssues as RepoData).pipe(
         tap(repoData => this.repoDataSubject.next(repoData))
       );
@@ -30,9 +28,14 @@ export class IssuesService {
     return this.authService.getToken().pipe(
       switchMap(token => {
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-        return this.http.get<RepoData>(`${environment.apiUrl}/github/${owner}/${repo}/issues`, { headers });
-      }),
-      tap(repoData => this.repoDataSubject.next(repoData))
+        return forkJoin({
+          repoMetadata: this.http.get<any>(`${environment.apiUrl}/github/${owner}/${repo}/metadata`, { headers }),
+          issues: this.http.get<any[]>(`${environment.apiUrl}/github/${owner}/${repo}/issues`, { headers })
+        }).pipe(
+          map(({ repoMetadata, issues }) => ({ repoMetadata, issues } as RepoData)),
+          tap(repoData => this.repoDataSubject.next(repoData))
+        );
+      })
     );
   }
 
@@ -41,7 +44,7 @@ export class IssuesService {
       switchMap(token => {
         const params = new HttpParams().set('numbers', numbers.join(','));
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-        return this.http.get<any[]>(`${environment.apiUrl}/github/${repoid}/issues`, { params, headers });
+        return this.http.get<any[]>(`${environment.apiUrl}/github/${repoid}/issues/numbers`, { params, headers });
       })
     );
   }
