@@ -52,7 +52,6 @@ export class SharedReportComponent implements OnInit {
       next: ({ repoMetadata, issues }) => {
         this.repoData = { repoMetadata, issues };
         this.applySpamLabels();
-        console.log(this.repoData)
       },
       error: (error) => {
         if (error.message === 'No report found') {
@@ -77,8 +76,16 @@ export class SharedReportComponent implements OnInit {
   }
 
   unflagIssue(issue: any): void {
-    // TODO: Implement unflag logic
-    this.message.success(`Unflagged issue #${issue.number}`);
+    const index = this.report.flaggedissues.findIndex((i: any) => i.number === issue.number);
+    
+    if (index !== -1) {
+      this.report.flaggedissues.splice(index, 1);
+      this.repoData.issues.splice(index, 1);
+
+      this.message.success(`Unflagged issue #${issue.number}`);
+    } else {
+      this.message.error(`Issue #${issue.number} not found in the report`);
+    }
   }
 
   closeIssue(issue: any): void {
