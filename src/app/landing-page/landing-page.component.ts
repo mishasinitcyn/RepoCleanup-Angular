@@ -24,7 +24,7 @@ export class LandingPageComponent {
   fetchRepoData() {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      this.fetchRepoData_mock();
+      // this.fetchRepoData_mock();
       return;
     }
 

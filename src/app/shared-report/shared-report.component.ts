@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ReportService } from '../services/report.service';
 import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { AuthService } from '../services/auth.service';
 import { map, switchMap } from 'rxjs/operators';
 
 @Component({
@@ -22,7 +21,7 @@ export class SharedReportComponent implements OnInit {
     { name: "Add Templates", description: "Create templates for Issues and Pull Requests", icon: "file-text" },
   ];
 
-  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private message: NzMessageService, private authService: AuthService) {
+  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private message: NzMessageService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 

@@ -102,8 +102,8 @@ router.post('/', async (req, res) => {
     const values = [creatorID, repoID, repoOwnerID, flaggedissues];
     
     const result = await pool.query(query, values);
-    const reportID = result.rows[0].reportid;
-    return res.status(201).json({ message: 'Report saved successfully', reportID });
+    const reportid = result.rows[0].reportid;
+    return res.status(201).json({ message: 'Report saved successfully', reportid });
   } catch (err) {
     console.error('Error saving report:', err);
     return res.status(500).json({ error: 'An error occurred while saving the report' });

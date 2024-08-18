@@ -5,6 +5,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -13,6 +14,7 @@ import { of } from 'rxjs';
 })
 export class CleanupReportComponent {
   @Input() repoData: any;
+  @Input() report: any;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
   expandedIssueNumbers: number[] = [];
 
@@ -21,7 +23,7 @@ export class CleanupReportComponent {
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService) {}
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
@@ -64,12 +66,20 @@ export class CleanupReportComponent {
   
     this.reportService.postReport(report).subscribe(
       response => {
+        this.report = {reportid: response.reportid}
         this.message.success('Report saved successfully');
       },
-      error => {
-        this.message.error('Error saving report');
-      }
+      error => this.message.error('Error saving report')
     );
+  }
+
+  copyReportUrlToClipboard(reportID: string): void {
+    const url = `https://repocleanup.com/report/${reportID}`;
+    if (this.clipboard.copy(url)) {
+      this.message.success('Report URL copied to clipboard');
+    } else {
+      this.message.error('Failed to copy URL to clipboard');
+    }
   }
   
   private showDeleteConfirmation(userId: string): void {

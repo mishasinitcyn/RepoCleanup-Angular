@@ -21,7 +21,7 @@ export class AuthService {
   }
   
   getToken = (): Observable<string | null> => this.tokenSubject.asObservable();
-  isAuthenticated = (): boolean => !!this.tokenSubject.value;
+  isAuthenticated = (): boolean => Boolean(this.tokenSubject.value);
   getUser = (): Observable<any | null> => this.userSubject.asObservable();
 
   login(): void {

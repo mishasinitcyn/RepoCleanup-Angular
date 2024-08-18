@@ -48,6 +48,7 @@
     <ng-container *ngSwitchCase="1">
       <app-cleanup-report
         [repoData]="repoData"
+        [report]="report"
         (removeSpamLabelEvent)="removeSpamLabel($event)">
       </app-cleanup-report>
     </ng-container>
