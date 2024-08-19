@@ -38,15 +38,19 @@ import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
-import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline } from '@ant-design/icons-angular/icons';
-const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline];
 
-import { IssuesService } from './issues.service';
+import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline } from '@ant-design/icons-angular/icons';
+const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline];
+
+import { IssuesService } from './services/issues.service';
 import {MarkdownModule} from 'ngx-markdown'
-import { Squiggly1Component } from './assets/squiggly1/squiggly1.component';
-import { Squiggly2Component } from './assets/squiggly2/squiggly2.component';
-import { CallbackComponent } from './callback/callback.component';
+import { Squiggly1Component } from './assets/svg/squiggly1.component';
+import { Squiggly2Component } from './assets/svg/squiggly2.component';
+import { CallbackComponent } from './assets/callback/callback.component';
 import { CleanupReportComponent } from './cleanup-report/cleanup-report.component';
+import { SharedReportComponent } from './shared-report/shared-report.component';
+import { HeaderComponent } from './assets/header/header.component';
+import { LayoutComponent } from './assets/layout/layout.component';
 
 @NgModule({
   declarations: [
@@ -56,7 +60,10 @@ import { CleanupReportComponent } from './cleanup-report/cleanup-report.componen
     Squiggly1Component,
     Squiggly2Component,
     CallbackComponent,
-    CleanupReportComponent
+    CleanupReportComponent,
+    SharedReportComponent,
+    HeaderComponent,
+    LayoutComponent
   ],
   imports: [
     BrowserModule,

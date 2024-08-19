@@ -1,5 +1,5 @@
 export interface IssueLabel {
-    id: number;
+    number: Number;
     label: string;
 }
 
@@ -14,7 +14,7 @@ export interface User {
 
 export interface FlaggedIssue {
     label: string; 
-    issue_id: Number; 
+    number: Number; 
     username: string
 }
   

@@ -1,7 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ReportService } from '../report.service';
+import { ReportService } from '../services/report.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { AuthService } from '../services/auth.service';
+import { switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -10,17 +14,16 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 })
 export class CleanupReportComponent {
   @Input() repoData: any;
-  @Input() user: any | null = null;
+  @Input() report: any;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
-  expandedIssueIds: number[] = [];
+  expandedIssueNumbers: number[] = [];
 
   get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue)) : []; }
   get totalIssues(): number { return this.repoData ? this.repoData.issues.length : 0; }
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService) {}
-  
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
@@ -29,45 +32,63 @@ export class CleanupReportComponent {
       this.message.info('Please fetch issues from a repository');
       return;
     }
-    if (!this.user) {
-      this.message.info('Please log in to save report');
-      return;
-    }
-  
-    const flaggedIssues = this.spamIssues.map((issue:any) => ({
-      issue_id: issue.id,
-      username: issue.user.login,
-      label: 'spam'
-    }));
-  
-    if (flaggedIssues.length === 0) {
-      this.showDeleteConfirmation();
-    } else {
-      this.saveReportData(flaggedIssues);
-    }
+
+    this.authService.getUser().pipe(
+      switchMap(user => {
+        if (!user) {
+          this.message.info('Please log in to save report');
+          return of(null);
+        }
+
+        const flaggedIssues = this.spamIssues.map((issue:any) => ({
+          number: issue.number,
+          username: issue.user.login,
+          label: 'spam'
+        }));
+
+        if (flaggedIssues.length === 0) {
+          this.showDeleteConfirmation(user.id);
+          return of(null);
+        } else {
+          return this.saveReportData(flaggedIssues, user.id);
+        }
+      })
+    ).subscribe();
   }
   
-  private saveReportData(flaggedIssues: any[]): void {
+  private saveReportData(flaggedIssues: any[], userId: string): any {
     const report = {
-      creatorGithubID: this.user.id,
+      creatorID: userId,
       repoID: this.repoData.repoMetadata.id,
-      repoAdminGithubID: this.repoData.repoMetadata.owner.id,
+      repoOwnerID: this.repoData.repoMetadata.owner.id,
       flaggedissues: JSON.stringify(flaggedIssues)
     };
   
     this.reportService.postReport(report).subscribe(
-      response => this.message.success('Report saved successfully'),
-      error => this.message.error('Error saving report: ' + error.message)
+      response => {
+        this.report = {reportid: response.reportid}
+        this.message.success('Report saved successfully');
+      },
+      error => this.message.error('Error saving report')
     );
   }
+
+  copyReportUrlToClipboard(reportID: string): void {
+    const url = `https://repocleanup.com/report/${reportID}`;
+    if (this.clipboard.copy(url)) {
+      this.message.success('Report URL copied to clipboard');
+    } else {
+      this.message.error('Failed to copy URL to clipboard');
+    }
+  }
   
-  private showDeleteConfirmation(): void {
+  private showDeleteConfirmation(userId: string): void {
     this.modal.confirm({
       nzTitle: 'Delete Report',
       nzContent: 'This will delete the existing report. Are you sure?',
       nzOkText: 'Yes',
       nzCancelText: 'No',
-      nzOnOk: () => this.deleteReport(),
+      nzOnOk: () => this.deleteReport(userId),
       nzBodyStyle: {
         backgroundColor: 'black',
         color: 'white'
@@ -76,8 +97,8 @@ export class CleanupReportComponent {
     });
   }
   
-  private deleteReport(): void {
-    this.reportService.deleteReport(this.user.id, this.repoData.repoMetadata.id).subscribe(
+  private deleteReport(userId: string): void {
+    this.reportService.deleteReport(userId, this.repoData.repoMetadata.id).subscribe(
       response => {
         if (response.message === 'No report found to delete') {
           this.message.info('No existing report found to delete');
@@ -85,17 +106,17 @@ export class CleanupReportComponent {
           this.message.success('Report deleted successfully');
         }
       },
-      error => this.message.error('Error deleting report: ' + error.message)
+      error => this.message.error('Error deleting report')
     );
   }
 
 
   expandIssue(issue: any): void {
-    const index = this.expandedIssueIds.indexOf(issue.id);
+    const index = this.expandedIssueNumbers.indexOf(issue.number);
     if (index === -1) {
-      this.expandedIssueIds.push(issue.id);
+      this.expandedIssueNumbers.push(issue.number);
     } else {
-      this.expandedIssueIds.splice(index, 1);
+      this.expandedIssueNumbers.splice(index, 1);
     }
   }
 
@@ -128,7 +149,6 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
 
   ${this.spamIssues.map(issue => `
   ### Issue #${issue.number}: ${issue.title}
-  - **ID**: ${issue.id}
   - **Username**: ${issue.user.login}
   - **Date**: ${issue.created_at}
   - **Labels**: ${issue.labels.map((l: any) => l.name).join(', ')}

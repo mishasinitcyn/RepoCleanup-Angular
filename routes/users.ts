@@ -4,12 +4,12 @@ import { pool } from '../db';
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { githubID, username, email } = req.body;
+  const { ID, username, email } = req.body;
   
   try {
     const result = await pool.query(
       'INSERT INTO Users (ID, username, email) VALUES ($1, $2, $3) ON CONFLICT (ID) DO UPDATE SET username = $2, email = $3 RETURNING *',
-      [githubID, username, email]
+      [ID, username, email]
     );
     
     res.json(result.rows[0]);

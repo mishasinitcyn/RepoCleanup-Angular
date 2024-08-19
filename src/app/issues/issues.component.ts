@@ -1,12 +1,12 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { IssuesService } from '../issues.service';
-import { ReportService } from '../report.service';
-import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../interface';
+import { IssuesService } from '../services/issues.service';
+import { ReportService } from '../services/report.service';
+import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../core/interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../services/auth.service';
 import { Observable, combineLatest, of } from 'rxjs';
 import { switchMap, tap, catchError } from 'rxjs/operators';
 
@@ -17,33 +17,68 @@ import { switchMap, tap, catchError } from 'rxjs/operators';
 })
 export class IssuesComponent implements OnInit {
   @ViewChild('githubNotification', { static: true }) githubNotification!: TemplateRef<{}>;
-
   repoData: any;
+  report: any;
   loadingClassification = false;
   isLoggedIn = false;
-  user$: Observable<any>;
-  currentUser: any | null = null;
   selectedTabIndex = 0;
 
-  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
-    this.user$ = this.authService.getUser();
-    this.user$.subscribe(user => this.currentUser = user);
-  }
-
-  ngOnInit(): void {
-    this.initializeUserAndRepoData();
-    this.checkLoginStatus();
-  }
-
-  login = () => this.authService.login();
-  getSpamIssues = (): any[] => this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue)) : [];
   hasSpamLabel = (issue: any): boolean => issue.labels.some((label: any) => label.name === 'spam');
   onTabChange = (event: any): void => this.selectedTabIndex = event.index;
   getLabelColor = (label: string): string => colorMapping[label.toLowerCase()] || 'default';
+
+  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {}
+  
+  ngOnInit(): void {
+    this.initializeRepoData();
+    this.checkLoginStatus();
+  }
+
+  private initializeRepoData(): void {
+    this.issuesService.getRepoData().pipe(
+      tap(this.updateRepoData.bind(this)),
+      switchMap(this.fetchOpenReport.bind(this))
+    ).subscribe(this.handleOpenReportResponse.bind(this));
+  }
+  
+  private updateRepoData(repoData: any): void {
+    this.repoData = repoData;
+  }
+  
+  private fetchOpenReport(repoData: any): Observable<any> {
+    if (repoData) {
+      return this.authService.getUser().pipe(
+        switchMap(user => {
+          if (user) {
+            return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
+          }
+          return of({ exists: false, report: null });
+        })
+      );
+    }
+    return of({ exists: false, report: null });
+  }
+  private handleOpenReportResponse(response: { exists: boolean, report: any }): void {
+    if (response.exists && response.report) {
+      this.report = response.report;
+      this.message.success("Existing report imported");
+      this.applyExistingReportLabels(response.report.flaggedissues);
+    }
+  }
+
+  private applyExistingReportLabels(flaggedIssues: any[]): void {
+    flaggedIssues.forEach((flaggedIssue: FlaggedIssue) => {
+      const issue = this.repoData.issues.find((issue: any) => issue.number === flaggedIssue.number);
+      if (issue) {
+        this.addSpamLabel(issue);
+      }
+    });
+    this.sortIssues();
+  }
   
   checkLoginStatus(): void {
     this.authService.getToken().subscribe(token => {
-      this.isLoggedIn = !!token;
+      this.isLoggedIn = Boolean(token);
       if (!this.isLoggedIn) this.showGithubNotification();
     });
   }
@@ -52,8 +87,8 @@ export class IssuesComponent implements OnInit {
     this.notification.template(this.githubNotification, {
       nzData: { title: 'GitHub Login', content: 'Please log in for full functionality' },
       nzPlacement: 'topRight',
-      nzCloseIcon: undefined,
-      nzDuration: 0
+      nzCloseIcon: ' ' as string,
+      nzDuration: 2000
     });
   }
 
@@ -76,7 +111,7 @@ export class IssuesComponent implements OnInit {
   updateIssuesWithSpamLabels(IssueLabels: IssueLabel[]): void {
     IssueLabels.forEach(IssueLabel => {
       if (IssueLabel.label.toLowerCase() === 'spam') {
-        const issue = this.repoData.issues.find((issue: any) => issue.id === IssueLabel.id);
+        const issue = this.repoData.issues.find((issue: any) => issue.number === IssueLabel.number);
         if (issue) {
           issue.labels = issue.labels || [];
           if (!issue.labels.some((label: any) => label.name === 'spam')) {
@@ -121,44 +156,5 @@ export class IssuesComponent implements OnInit {
         color: 'white'
       },
     });
-  }
-
-  applyExistingReportLabels(flaggedIssues: any[]): void {
-    flaggedIssues.forEach((flaggedIssue: FlaggedIssue) => {
-      const issue = this.repoData.issues.find((issue: any) => issue.id === flaggedIssue.issue_id);
-      if (issue) {
-        this.addSpamLabel(issue);
-      }
-    });
-    this.sortIssues();
-  }
-
-  private initializeUserAndRepoData(): void {
-    combineLatest([
-      this.user$,
-      this.issuesService.getRepoData()
-    ]).pipe(
-      tap(this.updateUserAndRepoData.bind(this)),
-      switchMap(this.fetchOpenReport.bind(this))
-    ).subscribe(this.handleOpenReportResponse.bind(this));
-  }
-  
-  private updateUserAndRepoData([user, repoData]: [any, any]): void {
-    this.currentUser = user;
-    this.repoData = repoData;
-  }
-  
-  private fetchOpenReport([user, repoData]: [any, any]): Observable<any> {
-    if (user && repoData) {
-      return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
-    }
-    return of({ exists: false, report: null });
-  }
-  
-  private handleOpenReportResponse(response: { exists: boolean, report: any }): void {
-    if (response.exists && response.report) {
-      this.message.success("Existing report imported");
-      this.applyExistingReportLabels(response.report.flaggedissues);
-    }
   }
 }

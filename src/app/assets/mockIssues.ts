@@ -1,4 +1,5 @@
-import { RepoData } from "../interface";
+import { RepoData } from "../core/interface";
+
 
 export const mockIssues: RepoData = {
     "repoMetadata": {

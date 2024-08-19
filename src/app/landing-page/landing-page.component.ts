@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { IssuesService } from '../issues.service';
-import { AuthService } from '../auth.service';
+import { IssuesService } from '../services/issues.service';
+import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -21,25 +21,23 @@ export class LandingPageComponent {
   login = () => this.authService.login();
   logout = () => this.authService.logout();
 
-  fetchIssues() {
+  fetchRepoData() {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      this.fetchIssues_mock();
+      // this.fetchRepoData_mock();
       return;
     }
 
     const [owner, repo] = repoPath.split('/');
-
-    this.issuesService.fetchIssues(owner, repo).subscribe(
+    this.issuesService.fetchRepoData(owner, repo).subscribe(
       repoData => this.router.navigate(['/issues']),
-      error => alert('Error fetching issues')
+      error => alert('Error fetching repository data')
     );
   }
 
-  fetchIssues_mock(): void {
-    this.issuesService.fetchIssues('mock', 'repo').subscribe(
+  fetchRepoData_mock(): void {
+    this.issuesService.fetchRepoData('mock', 'mock').subscribe(
       () => this.router.navigate(['/issues']),
-      error => console.error('Error setting mock issues', error)
     );
   }
 

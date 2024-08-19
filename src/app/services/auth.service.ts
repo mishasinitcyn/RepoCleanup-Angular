@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, from, tap } from 'rxjs';
-import { environment } from '../environments/environment';
-import { User } from './interface';
+import { environment } from '../../environments/environment';
+import { User } from '../core/interface';
 import { Octokit } from '@octokit/rest';
 
 @Injectable({
@@ -19,8 +19,14 @@ export class AuthService {
       this.setToken(token);
     }
   }
+  
+  getToken = (): Observable<string | null> => this.tokenSubject.asObservable();
+  isAuthenticated = (): boolean => Boolean(this.tokenSubject.value);
+  getUser = (): Observable<any | null> => this.userSubject.asObservable();
 
   login(): void {
+    const currentRoute = window.location.pathname + window.location.search + window.location.hash;
+    localStorage.setItem('github_login_redirect', currentRoute);
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${environment.githubClientId}&redirect_uri=${environment.githubRedirectUri}&scope=repo`;
     window.location.href = githubAuthUrl;
   }
@@ -47,18 +53,6 @@ export class AuthService {
     this.tokenSubject.next(token);
     this.octokit = new Octokit({ auth: token });
     this.fetchUser();
-  }
-
-  getToken(): Observable<string | null> {
-    return this.tokenSubject.asObservable();
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.tokenSubject.value;
-  }
-
-  getUser(): Observable<User | null> {
-    return this.userSubject.asObservable();
   }
 
   private fetchUser(): void {
