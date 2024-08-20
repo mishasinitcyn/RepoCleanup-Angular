@@ -127,6 +127,32 @@ router.get('/:owner/:repo/issues/numbers', async (req, res) => {
   }
 });
 
+router.post('/:owner/:repo/issues/:issue_number/lock', async (req, res) => {
+  const { owner, repo, issue_number } = req.params;
+  const { lock_reason } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.issues.lock({
+      owner,
+      repo,
+      issue_number: parseInt(issue_number),
+      lock_reason
+    });
+
+    return res.status(200).json({ message: 'Issue locked successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to lock issue' });
+  }
+});
+
 router.post('/callback', async (req, res) => {
   const { code } = req.body;
   try {

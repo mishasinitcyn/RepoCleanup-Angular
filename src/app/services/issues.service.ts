@@ -71,4 +71,28 @@ export class IssuesService {
       catchError(error => throwError(() => new Error('Failed to fetch issues')))
     );
   }
+
+  lockIssue(owner: string, repo: string, issueNumber: number): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.post(
+          `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/lock`, 
+          { lock_reason: 'spam' }, 
+          { headers }
+        ).pipe(
+          map(response => ({
+            ...response,
+            number: issueNumber,
+            locked: true,
+            active_lock_reason: 'spam'
+          }))
+        );
+      }),
+      catchError(error => throwError(() => new Error('Failed to lock issue')))
+    );
+  }
 }

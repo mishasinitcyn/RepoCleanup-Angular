@@ -110,6 +110,53 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  const reportId = parseInt(req.params.id);
+  if (isNaN(reportId)) {
+    return res.status(400).json({ error: 'Invalid report ID' });
+  }
+
+  const { flaggedissues } = req.body;
+  if (!flaggedissues) {
+    return res.status(400).json({ error: 'Missing required field: flaggedissues' });
+  }
+
+  try {
+    // Ensure flaggedissues is properly formatted as JSON
+    const flaggedissuesJson = JSON.stringify(flaggedissues);
+
+    const query = `
+      UPDATE Reports
+      SET flaggedissues = $1::jsonb
+      WHERE reportID = $2
+      RETURNING *;
+    `;
+    const values = [flaggedissuesJson, reportId];
+    
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const updatedReport = result.rows[0];
+    const response: ReportResponse = {
+      reportid: updatedReport.reportid,
+      creatorid: updatedReport.creatorid,
+      datecreated: updatedReport.datecreated,
+      isopen: updatedReport.isopen,
+      repoid: updatedReport.repoid,
+      repoownerid: updatedReport.repoownerid,
+      flaggedissues: updatedReport.flaggedissues
+    };
+
+    return res.json({ message: 'Report updated successfully', report: response });
+  } catch (err) {
+    console.error('Error updating report:', err);
+    return res.status(500).json({ error: 'An error occurred while updating the report' });
+  }
+});
+
 router.delete('/:creatorID/:repoID', async (req, res) => {
   const { creatorID, repoID } = req.params;
   if (!creatorID || !repoID) {
@@ -135,5 +182,7 @@ router.delete('/:creatorID/:repoID', async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while deleting the report' });
   }
 });
+
+
 
 export const reportsRouter = router;

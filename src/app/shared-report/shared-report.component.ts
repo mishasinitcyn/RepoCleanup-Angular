@@ -3,7 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ReportService } from '../services/report.service';
 import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { AuthService } from '../services/auth.service';
+import { combineLatest, forkJoin, Observable, of } from 'rxjs';
 
 @Component({
   selector: 'app-shared-report',
@@ -15,22 +17,43 @@ export class SharedReportComponent implements OnInit {
   report: any;
   repoData: any;
   expandedIssueNumbers: number[] = [];
+  isRepoOwner: boolean = false;
   recommendedActions = [
     { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
     { name: "Require PR Approvals", description: "Set up a rule to require 2 approvals for PRs", icon: "team" },
     { name: "Add Templates", description: "Create templates for Issues and Pull Requests", icon: "file-text" },
   ];
 
-  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private message: NzMessageService) {
+  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, private message: NzMessageService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 
   ngOnInit(): void {
-    this.fetchReport();
+    this.fetchReportAndCheckOwnership();
   }
 
-  fetchReport(): void {
-    this.reportService.getReport(parseInt(this.reportID)).pipe(
+  fetchReportAndCheckOwnership(): void {
+    const report$ = this.fetchReport();
+    const user$ = this.authService.getUser();
+
+    combineLatest([report$, user$]).pipe(
+      map(([repoData, user]) => {
+        if (user && repoData && repoData.repoMetadata) {
+          this.isRepoOwner = user.login === repoData.repoMetadata.owner.login;
+        }
+        return repoData;
+      }),
+      tap(repoData => {
+        this.repoData = repoData;
+        this.applySpamLabels();
+      })
+    ).subscribe({
+      error: (error) =>  this.message.error('An error occurred while fetching the report data.')
+    });
+  }
+
+  fetchReport(): Observable<any> {
+    return this.reportService.getReport(parseInt(this.reportID)).pipe(
       switchMap(response => {
         if (response.message === 'No report found') {
           throw new Error('No report found');
@@ -47,19 +70,15 @@ export class SharedReportComponent implements OnInit {
           map(issues => ({ repoMetadata, issues }))
         );
       }),
-    ).subscribe({
-      next: ({ repoMetadata, issues }) => {
-        this.repoData = { repoMetadata, issues };
-        this.applySpamLabels();
-      },
-      error: (error) => {
+      catchError(error => {
         if (error.message === 'No report found') {
           this.message.error('No report found with the given ID.');
         } else {
           this.message.error('An error occurred while fetching the report data.');
         }
-      }
-    });
+        return of(null);
+      })
+    );
   }
   
   applySpamLabels(): void {
@@ -88,8 +107,61 @@ export class SharedReportComponent implements OnInit {
   }
 
   closeIssue(issue: any): void {
-    // TODO: Implement close issue logic
-    this.message.success(`Closed issue #${issue.number} as spam`);
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can lock issues as spam.');
+      return;
+    }
+  
+    const owner = this.repoData.repoMetadata.owner.login;
+    const repo = this.repoData.repoMetadata.name;
+  
+    this.issuesService.lockIssue(owner, repo, issue.number).pipe(
+      catchError(error => {
+        this.message.error(`Failed to lock issue #${issue.number}`);
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this.message.success(`Locked issue #${issue.number} as spam`);
+        
+        // Update the issue in report.flaggedIssues
+        const flaggedIssue = this.report.flaggedissues.find((i: any) => i.number === issue.number);
+        if (flaggedIssue) {
+          flaggedIssue.locked = true;
+        }
+  
+        // Update the issue in repoData.issues
+        const repoIssue = this.repoData.issues.find((i: any) => i.number === issue.number);
+        if (repoIssue) {
+          repoIssue.locked = true;
+          repoIssue.active_lock_reason = 'spam';
+        }
+  
+        // Update the report
+        this.updateReport();
+      }
+    });
+  }
+
+  updateReport(): void {
+    const updatedReport = {
+      ...this.report,
+      flaggedissues: this.report.flaggedissues.map((issue: any) => ({
+        ...issue,
+        locked: issue.locked || false
+      }))
+    };
+  
+    this.reportService.updateReport(updatedReport).pipe(
+      catchError(error => {
+        this.message.error('Failed to update the report');
+        return of(null);
+      })
+    ).subscribe(response => {
+      if (response) {
+        this.report = response.report;
+      }
+    });
   }
 
   banUser(issue: any): void {
