@@ -5,7 +5,7 @@ import { IssuesService } from '../services/issues.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
-import { combineLatest, forkJoin, Observable, of } from 'rxjs';
+import { combineLatest, Observable, of, throwError } from 'rxjs';
 
 @Component({
   selector: 'app-shared-report',
@@ -18,6 +18,8 @@ export class SharedReportComponent implements OnInit {
   repoData: any;
   expandedIssueNumbers: number[] = [];
   isRepoOwner: boolean = false;
+  currentUser: any;
+
   recommendedActions = [
     { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
     { name: "Require PR Approvals", description: "Set up a rule to require 2 approvals for PRs", icon: "team" },
@@ -27,6 +29,8 @@ export class SharedReportComponent implements OnInit {
   constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, private message: NzMessageService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
+
+  hasEditPermission(): boolean { return !!this.currentUser && (this.currentUser.id === this.report.creatorid || this.currentUser.id === this.repoData.repoMetadata.owner.id); }
 
   ngOnInit(): void {
     this.fetchReportAndCheckOwnership();
@@ -38,8 +42,9 @@ export class SharedReportComponent implements OnInit {
 
     combineLatest([report$, user$]).pipe(
       map(([repoData, user]) => {
+        this.currentUser = user;
         if (user && repoData && repoData.repoMetadata) {
-          this.isRepoOwner = user.login === repoData.repoMetadata.owner.login;
+          this.isRepoOwner = user.id === repoData.repoMetadata.owner.id;
         }
         return repoData;
       }),
@@ -48,7 +53,7 @@ export class SharedReportComponent implements OnInit {
         this.applySpamLabels();
       })
     ).subscribe({
-      error: (error) =>  this.message.error('An error occurred while fetching the report data.')
+      error: (error) => this.message.error('An error occurred while fetching the report data.')
     });
   }
 
@@ -94,19 +99,38 @@ export class SharedReportComponent implements OnInit {
   }
 
   unflagIssue(issue: any): void {
+    if (!this.hasEditPermission()) {
+      this.message.error('You do not have permission to edit this report.');
+      return;
+    }
+
     const index = this.report.flaggedissues.findIndex((i: any) => i.number === issue.number);
     
     if (index !== -1) {
       this.report.flaggedissues.splice(index, 1);
       this.repoData.issues.splice(index, 1);
 
-      this.message.success(`Unflagged issue #${issue.number}`);
+      this.updateReport().subscribe(
+        () => {
+          this.message.success(`Unflagged issue #${issue.number}`);
+        },
+        (error) => {
+          this.message.error(`Failed to unflag issue #${issue.number}`);
+          // Revert the changes if update fails
+          this.report.flaggedissues.splice(index, 0, issue);
+          this.repoData.issues.splice(index, 0, issue);
+        }
+      );
     } else {
       this.message.error(`Issue #${issue.number} not found in the report`);
     }
   }
 
   closeIssue(issue: any): void {
+    if (!this.hasEditPermission()) {
+      this.message.error('You do not have permission to edit this report.');
+      return;
+    }
     if (!this.isRepoOwner) {
       this.message.error('Only repository owners can lock issues as spam.');
       return;
@@ -152,7 +176,7 @@ export class SharedReportComponent implements OnInit {
     });
   }
 
-  updateReport(): void {
+  updateReport(): Observable<any> {
     const updatedReport = {
       ...this.report,
       flaggedissues: this.report.flaggedissues.map((issue: any) => ({
@@ -161,19 +185,24 @@ export class SharedReportComponent implements OnInit {
       }))
     };
   
-    this.reportService.updateReport(updatedReport).pipe(
+    return this.reportService.updateReport(updatedReport).pipe(
+      tap(response => {
+        if (response) {
+          this.report = response.report;
+        }
+      }),
       catchError(error => {
         this.message.error('Failed to update the report');
-        return of(null);
+        return throwError(() => new Error('Failed to update report'));
       })
-    ).subscribe(response => {
-      if (response) {
-        this.report = response.report;
-      }
-    });
+    );
   }
 
   banUser(issue: any): void {
+    if (!this.hasEditPermission()) {
+      this.message.error('You do not have permission to edit this report.');
+      return;
+    }
     // TODO: Implement ban user logic
     this.message.success(`Banned user ${issue.user.login}`);
   }
