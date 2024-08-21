@@ -79,20 +79,61 @@ export class IssuesService {
           return throwError(() => new Error('User not authenticated'));
         }
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-        return this.http.post(
-          `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/lock`, 
-          { lock_reason: 'spam' }, 
+        
+        // Step 1: Lock the issue
+        return this.http.put(
+          `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/lock`,
+          { lock_reason: 'spam' },
           { headers }
         ).pipe(
-          map(response => ({
-            ...response,
+          // Step 2: Close the issue
+          switchMap(() => this.closeIssue(owner, repo, issueNumber, headers)),
+          // Step 3: Ensure "spam" label exists and add it to the issue
+          switchMap(() => this.addSpamLabel(owner, repo, issueNumber, headers)),
+          map(() => ({
             number: issueNumber,
             locked: true,
-            active_lock_reason: 'spam'
+            state: 'closed',
           }))
         );
       }),
-      catchError(error => throwError(() => new Error('Failed to lock issue')))
+      catchError(error => {
+        return throwError(() => new Error('Failed to process issue'));
+      })
+    );
+  }
+
+  private closeIssue(owner: string, repo: string, issueNumber: number, headers: HttpHeaders): Observable<any> {
+    return this.http.patch(
+      `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}`,
+      { state: 'closed' },
+      { headers }
+    );
+  }
+
+  private addSpamLabel(owner: string, repo: string, issueNumber: number, headers: HttpHeaders): Observable<any> {
+    return this.ensureSpamLabelExists(owner, repo, headers).pipe(
+      switchMap(() => this.http.post(
+        `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/labels`,
+        { labels: ['spam'] },
+        { headers }
+      ))
+    );
+  }
+
+  private ensureSpamLabelExists(owner: string, repo: string, headers: HttpHeaders): Observable<any> {
+    return this.http.post(
+      `${environment.apiUrl}/github/${owner}/${repo}/labels`,
+      { name: 'spam', color: 'f5222d', description: 'Spam issue' },
+      { headers }
+    ).pipe(
+      catchError(error => {
+        if (error.status === 422) {
+          // Label already exists, we can ignore this error
+          return of(null);
+        }
+        return throwError(() => error);
+      })
     );
   }
 }

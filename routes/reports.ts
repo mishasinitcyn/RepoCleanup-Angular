@@ -4,7 +4,7 @@ import { QueryResult } from 'pg';
 
 const router = express.Router();
 
-interface ReportResponse {
+interface Report {
   reportid: Number;
   creatorid: String;
   datecreated: Date;
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 
     const report = result.rows[0];
 
-    const response: ReportResponse = {
+    const response: Report = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
@@ -67,7 +67,7 @@ router.get('/open/:creatorID/:repoID', async (req, res) => {
 
     const report = result.rows[0];
 
-    const response: ReportResponse = {
+    const response: Report = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
@@ -140,7 +140,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const updatedReport = result.rows[0];
-    const response: ReportResponse = {
+    const response: Report = {
       reportid: updatedReport.reportid,
       creatorid: updatedReport.creatorid,
       datecreated: updatedReport.datecreated,

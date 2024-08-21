@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { colorMapping } from '../core/interface';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -24,8 +25,10 @@ export class CleanupReportComponent {
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
   constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
+  
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
+  getClosedIssues = (): any[] => this.report?.flaggedissues.filter((issue: any) => issue.locked === true) || [];
 
   saveReport(): void {
     if (!this.repoData || !this.repoData.repoMetadata.id) {
@@ -172,5 +175,12 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  getLabelColor(label: string): string {
+    if (label) {
+      return colorMapping[label.toLowerCase()] || 'default';
+    }
+    return 'red'
   }
 }

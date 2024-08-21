@@ -117,24 +117,33 @@ export class SharedReportComponent implements OnInit {
   
     this.issuesService.lockIssue(owner, repo, issue.number).pipe(
       catchError(error => {
-        this.message.error(`Failed to lock issue #${issue.number}`);
+        this.message.error(`Failed to process issue #${issue.number}`);
         return of(null);
       })
     ).subscribe(response => {
       if (response) {
-        this.message.success(`Locked issue #${issue.number} as spam`);
+        this.message.success(`Issue #${issue.number} locked, closed, and labeled as spam`);
         
         // Update the issue in report.flaggedIssues
         const flaggedIssue = this.report.flaggedissues.find((i: any) => i.number === issue.number);
         if (flaggedIssue) {
           flaggedIssue.locked = true;
+          flaggedIssue.state = 'closed';
+          flaggedIssue.labels = flaggedIssue.labels || [];
+          if (!flaggedIssue.labels.includes('spam')) {
+            flaggedIssue.labels.push('spam');
+          }
         }
   
         // Update the issue in repoData.issues
         const repoIssue = this.repoData.issues.find((i: any) => i.number === issue.number);
         if (repoIssue) {
           repoIssue.locked = true;
-          repoIssue.active_lock_reason = 'spam';
+          repoIssue.state = 'closed';
+          repoIssue.labels = repoIssue.labels || [];
+          if (!repoIssue.labels.some((label: any) => label.name === 'spam')) {
+            repoIssue.labels.push({ name: 'spam', color: 'b60205' });
+          }
         }
   
         // Update the report

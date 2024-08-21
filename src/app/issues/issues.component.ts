@@ -7,8 +7,8 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { AuthService } from '../services/auth.service';
-import { Observable, combineLatest, of } from 'rxjs';
-import { switchMap, tap, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-issues',

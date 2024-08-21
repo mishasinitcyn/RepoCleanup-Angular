@@ -127,7 +127,7 @@ router.get('/:owner/:repo/issues/numbers', async (req, res) => {
   }
 });
 
-router.post('/:owner/:repo/issues/:issue_number/lock', async (req, res) => {
+router.put('/:owner/:repo/issues/:issue_number/lock', async (req, res) => {
   const { owner, repo, issue_number } = req.params;
   const { lock_reason } = req.body;
   const token = req.headers.authorization?.split(' ')[1];
@@ -150,6 +150,89 @@ router.post('/:owner/:repo/issues/:issue_number/lock', async (req, res) => {
   } catch (error: any) {
     console.error('GitHub API error:', error);
     return res.status(error.status || 500).json({ error: 'Failed to lock issue' });
+  }
+});
+
+router.patch('/:owner/:repo/issues/:issue_number', async (req, res) => {
+  const { owner, repo, issue_number } = req.params;
+  const { state } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.issues.update({
+      owner,
+      repo,
+      issue_number: parseInt(issue_number),
+      state
+    });
+
+    return res.status(200).json({ message: 'Issue updated successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to update issue' });
+  }
+});
+
+router.post('/:owner/:repo/labels', async (req, res) => {
+  const { owner, repo } = req.params;
+  const { name, color, description } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.issues.createLabel({
+      owner,
+      repo,
+      name,
+      color,
+      description
+    });
+
+    return res.status(201).json({ message: 'Label created successfully' });
+  } catch (error: any) {
+    if (error.status === 422) {
+      // Label already exists, we can ignore this error
+      return res.status(200).json({ message: 'Label already exists' });
+    }
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to create label' });
+  }
+});
+
+router.post('/:owner/:repo/issues/:issue_number/labels', async (req, res) => {
+  const { owner, repo, issue_number } = req.params;
+  const { labels } = req.body;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.issues.addLabels({
+      owner,
+      repo,
+      issue_number: parseInt(issue_number),
+      labels
+    });
+
+    return res.status(200).json({ message: 'Labels added successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to add labels' });
   }
 });
 
