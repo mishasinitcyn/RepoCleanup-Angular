@@ -7,8 +7,8 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { AuthService } from '../services/auth.service';
-import { Observable, of } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { Observable, of, forkJoin } from 'rxjs';
+import { switchMap, tap, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-issues',
@@ -37,8 +37,16 @@ export class IssuesComponent implements OnInit {
   private initializeRepoData(): void {
     this.issuesService.getRepoData().pipe(
       tap(this.updateRepoData.bind(this)),
-      switchMap(this.fetchOpenReport.bind(this))
-    ).subscribe(this.handleOpenReportResponse.bind(this));
+      switchMap(this.fetchOpenReport.bind(this)),
+      switchMap(this.handleOpenReportResponse.bind(this)),
+      switchMap(this.fetchMissingIssues.bind(this))
+    ).subscribe(
+      () => {
+        this.applyExistingReportLabels();
+        this.sortIssues();
+      },
+      error => this.message.error('Error initializing data: ' + error.message)
+    );
   }
   
   private updateRepoData(repoData: any): void {
@@ -58,22 +66,52 @@ export class IssuesComponent implements OnInit {
     }
     return of({ exists: false, report: null });
   }
-  private handleOpenReportResponse(response: { exists: boolean, report: any }): void {
+
+  private handleOpenReportResponse(response: { exists: boolean, report: any }): Observable<any> {
     if (response.exists && response.report) {
       this.report = response.report;
       this.message.success("Existing report imported");
-      this.applyExistingReportLabels(response.report.flaggedissues);
+      return of(this.report);
     }
+    return of(null);
   }
 
-  private applyExistingReportLabels(flaggedIssues: any[]): void {
-    flaggedIssues.forEach((flaggedIssue: FlaggedIssue) => {
+  private fetchMissingIssues(report: any): Observable<any> {
+    if (!report || !this.repoData) return of(null);
+    const existingIssueNumbers = new Set(this.repoData.issues.map((issue: any) => issue.number));
+    const missingIssueNumbers = report.flaggedissues
+      .filter((issue: FlaggedIssue) => !existingIssueNumbers.has(issue.number))
+      .map((issue: FlaggedIssue) => issue.number);
+
+    if (missingIssueNumbers.length === 0) return of(null);
+
+    return this.issuesService.getIssuesByIssueNumbers(
+      this.repoData.repoMetadata.owner.login,
+      this.repoData.repoMetadata.name,
+      missingIssueNumbers
+    ).pipe(
+      tap(missingIssues => {
+        missingIssues.forEach((issue: any) => {
+          const flaggedIssue = report.flaggedissues.find((fi: FlaggedIssue) => fi.number === issue.number);
+          if (flaggedIssue) {
+            flaggedIssue.state = issue.state;
+          }
+          this.repoData.issues.push(issue);
+        });
+      })
+    );
+  }
+
+  private applyExistingReportLabels(): void {
+    if (!this.report || !this.report.flaggedissues) return;
+
+    this.report.flaggedissues.forEach((flaggedIssue: FlaggedIssue) => {
       const issue = this.repoData.issues.find((issue: any) => issue.number === flaggedIssue.number);
       if (issue) {
         this.addSpamLabel(issue);
+        issue.state = flaggedIssue.state;
       }
     });
-    this.sortIssues();
   }
   
   checkLoginStatus(): void {
@@ -126,7 +164,10 @@ export class IssuesComponent implements OnInit {
     this.repoData.issues.sort((a: any, b: any) => {
       const aIsSpam = a.labels.some((label: any) => label.name === 'spam');
       const bIsSpam = b.labels.some((label: any) => label.name === 'spam');
-      return (aIsSpam === bIsSpam) ? 0 : aIsSpam ? -1 : 1;
+      if (aIsSpam === bIsSpam) {
+        return a.state === 'closed' ? 1 : -1; // Open issues first
+      }
+      return aIsSpam ? -1 : 1; // Spam issues first
     });
   }
 

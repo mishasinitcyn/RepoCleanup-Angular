@@ -15,7 +15,8 @@ export interface User {
 export interface FlaggedIssue {
     label: string; 
     number: Number; 
-    username: string
+    username: string;
+    state: string;
 }
   
 export interface RepoData {

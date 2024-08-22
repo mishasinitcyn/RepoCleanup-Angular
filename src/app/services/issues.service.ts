@@ -92,7 +92,6 @@ export class IssuesService {
           switchMap(() => this.addSpamLabel(owner, repo, issueNumber, headers)),
           map(() => ({
             number: issueNumber,
-            locked: true,
             state: 'closed',
           }))
         );

@@ -1,4 +1,4 @@
-<div class="cleanup-report" *ngIf="repoData && report">
+<div class="cleanup-report" *ngIf="repoData">
 
   <div class="summary-card">
     <nz-card [nzBordered]="false">
@@ -13,7 +13,8 @@
     </nz-card>
   </div>
 
-  <nz-table #issuesTable [nzData]="repoData.issues" 
+  <nz-card nzTitle="Flagged Issues">
+    <nz-table [nzData]="spamIssues"
   [nzFrontPagination]="true"
   [nzShowPagination]="true"
   [nzTotal]="repoData.issues.length"
@@ -55,18 +56,41 @@
       </ng-container>
     </tbody>
   </nz-table>
+  </nz-card>
 
-  <nz-card nzTitle="Closed Issues" [nzExtra]="extraTemplate" *ngIf="getClosedIssues().length > 0">
-    <ng-container >
-      <nz-list [nzDataSource]="getClosedIssues()" nzBordered nzSize="small">
-        <nz-list-item *ngFor="let issue of getClosedIssues()">
-          <span>Issue #{{ issue.number }}</span>
-          <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
-            {{ label }}
-          </nz-tag>
-        </nz-list-item>
-      </nz-list>
-    </ng-container>
+  <nz-card nzTitle="Closed Issues" *ngIf="closedIssues.length > 0">
+    <nz-table [nzData]="closedIssues">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Number</th>
+          <th>Username</th>
+          <th>Labels</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let issue of closedIssues">
+          <tr (click)="expandIssue(issue)">
+            <td>{{ issue.title }}</td>
+            <td>#{{ issue.number }}</td>
+            <td>{{ issue.user.login }}</td>
+            <td>
+              <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+                {{ label.name }}
+              </nz-tag>
+            </td>
+          </tr>
+          <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
+            <td colspan="4" class="issue-details">
+              <div>
+                <p><strong>Body:</strong> {{ issue.body }}</p>
+                <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </nz-table>
   </nz-card>
 
   <div class="download-buttons" *ngIf="repoData">
@@ -77,5 +101,5 @@
 </div>
 
 <ng-template #extraTemplate>
-  <span>Total: {{ getClosedIssues().length }}</span>
+  <span>Total: {{ closedIssues.length }}</span>
 </ng-template>

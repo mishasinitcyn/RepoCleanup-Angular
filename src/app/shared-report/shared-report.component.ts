@@ -19,6 +19,7 @@ export class SharedReportComponent implements OnInit {
   expandedIssueNumbers: number[] = [];
   isRepoOwner: boolean = false;
   currentUser: any;
+  closedIssues: any[] = [];
 
   recommendedActions = [
     { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
@@ -31,6 +32,7 @@ export class SharedReportComponent implements OnInit {
   }
 
   hasEditPermission(): boolean { return !!this.currentUser && (this.currentUser.id === this.report.creatorid || this.currentUser.id === this.repoData.repoMetadata.owner.id); }
+  getClosedIssues = (): any[] => this.closedIssues;
 
   ngOnInit(): void {
     this.fetchReportAndCheckOwnership();
@@ -50,7 +52,6 @@ export class SharedReportComponent implements OnInit {
       }),
       tap(repoData => {
         this.repoData = repoData;
-        this.applySpamLabels();
       })
     ).subscribe({
       error: (error) => this.message.error('An error occurred while fetching the report data.')
@@ -75,6 +76,10 @@ export class SharedReportComponent implements OnInit {
           map(issues => ({ repoMetadata, issues }))
         );
       }),
+      tap(repoData => {
+        this.repoData = repoData;
+        this.categorizeIssues();
+      }),
       catchError(error => {
         if (error.message === 'No report found') {
           this.message.error('No report found with the given ID.');
@@ -85,16 +90,22 @@ export class SharedReportComponent implements OnInit {
       })
     );
   }
-  
-  applySpamLabels(): void {
-    this.repoData.issues.forEach((issue:any) => {
+
+  categorizeIssues(): void {
+    this.closedIssues = [];
+    this.repoData.issues = this.repoData.issues.filter((issue: any) => {
       const flaggedIssue = this.report.flaggedissues.find((fi: any) => fi.number === issue.number);
       if (flaggedIssue) {
         issue.labels = issue.labels || [];
         if (!issue.labels.some((label: any) => label.name === 'spam')) {
           issue.labels.push({ name: 'spam', color: 'red' });
         }
+        if (issue.state === 'closed') {
+          this.closedIssues.push(issue);
+          return false;
+        }
       }
+      return true;
     });
   }
 
@@ -132,7 +143,7 @@ export class SharedReportComponent implements OnInit {
       return;
     }
     if (!this.isRepoOwner) {
-      this.message.error('Only repository owners can lock issues as spam.');
+      this.message.error('Only repository owners can close issues as spam.');
       return;
     }
   
@@ -146,12 +157,11 @@ export class SharedReportComponent implements OnInit {
       })
     ).subscribe(response => {
       if (response) {
-        this.message.success(`Issue #${issue.number} locked, closed, and labeled as spam`);
+        this.message.success(`Issue #${issue.number} locked, closed and labeled as spam`);
         
         // Update the issue in report.flaggedIssues
         const flaggedIssue = this.report.flaggedissues.find((i: any) => i.number === issue.number);
         if (flaggedIssue) {
-          flaggedIssue.locked = true;
           flaggedIssue.state = 'closed';
           flaggedIssue.labels = flaggedIssue.labels || [];
           if (!flaggedIssue.labels.includes('spam')) {
@@ -159,15 +169,12 @@ export class SharedReportComponent implements OnInit {
           }
         }
   
-        // Update the issue in repoData.issues
-        const repoIssue = this.repoData.issues.find((i: any) => i.number === issue.number);
-        if (repoIssue) {
-          repoIssue.locked = true;
-          repoIssue.state = 'closed';
-          repoIssue.labels = repoIssue.labels || [];
-          if (!repoIssue.labels.some((label: any) => label.name === 'spam')) {
-            repoIssue.labels.push({ name: 'spam', color: 'b60205' });
-          }
+        // Move the issue to closedIssues
+        const index = this.repoData.issues.findIndex((i: any) => i.number === issue.number);
+        if (index !== -1) {
+          const closedIssue = this.repoData.issues.splice(index, 1)[0];
+          closedIssue.state = 'closed';
+          this.closedIssues.push(closedIssue);
         }
   
         // Update the report
@@ -175,6 +182,7 @@ export class SharedReportComponent implements OnInit {
       }
     });
   }
+
 
   updateReport(): Observable<any> {
     const updatedReport = {

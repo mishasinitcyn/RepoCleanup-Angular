@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { ReportService } from '../services/report.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -6,29 +6,45 @@ import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { colorMapping } from '../core/interface';
+import { colorMapping, FlaggedIssue } from '../core/interface';
 
 @Component({
   selector: 'app-cleanup-report',
   templateUrl: './cleanup-report.component.html',
   styleUrls: ['./cleanup-report.component.less']
 })
-export class CleanupReportComponent {
+export class CleanupReportComponent implements OnInit {
   @Input() repoData: any;
   @Input() report: any;
   @Output() removeSpamLabelEvent = new EventEmitter<any>()
   expandedIssueNumbers: number[] = [];
+  closedIssues: any[] = [];
 
-  get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue)) : []; }
+  get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue) && issue.state !== 'closed') : []; }
   get totalIssues(): number { return this.repoData ? this.repoData.issues.length : 0; }
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
   constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
+
+  ngOnInit(): void {
+      this.updateClosedIssues();
+  }
+
+  updateClosedIssues(): void {
+    if (this.repoData && this.report) {
+      this.closedIssues = this.repoData.issues.filter((issue: any) => {
+        const isFlagged = this.report.flaggedissues.some((flaggedIssue: any) => flaggedIssue.number === issue.number);
+        return isFlagged && issue.state === 'closed';
+      });
+    }
+  }
   
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
-  getClosedIssues = (): any[] => this.report?.flaggedissues.filter((issue: any) => issue.locked === true) || [];
+  getClosedIssues(): any[] {
+    return this.closedIssues;
+  }
 
   saveReport(): void {
     if (!this.repoData || !this.repoData.repoMetadata.id) {
@@ -43,10 +59,11 @@ export class CleanupReportComponent {
           return of(null);
         }
 
-        const flaggedIssues = this.spamIssues.map((issue:any) => ({
+        const flaggedIssues = [...this.spamIssues, ...this.closedIssues].map((issue:any) => ({
           number: issue.number,
           username: issue.user.login,
-          label: 'spam'
+          label: 'spam',
+          state: issue.state
         }));
 
         if (flaggedIssues.length === 0) {
@@ -114,6 +131,10 @@ export class CleanupReportComponent {
   }
 
 
+  getLabelColor(label: string): string {
+    return colorMapping[label.toLowerCase()] || 'default';
+  }
+
   expandIssue(issue: any): void {
     const index = this.expandedIssueNumbers.indexOf(issue.number);
     if (index === -1) {
@@ -175,12 +196,5 @@ ${this.labelDistribution.map(([label, count]) => `- ${label}: ${count}`).join('\
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }
-
-  getLabelColor(label: string): string {
-    if (label) {
-      return colorMapping[label.toLowerCase()] || 'default';
-    }
-    return 'red'
   }
 }
