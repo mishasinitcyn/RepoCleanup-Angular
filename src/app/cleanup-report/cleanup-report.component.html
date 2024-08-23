@@ -40,7 +40,7 @@
             </nz-tag>
           </td>
           <td>
-            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue)">
+            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue); $event.stopPropagation()">
               <span nz-icon nzType="minus" nzTheme="outline"></span>
             </button>
           </td>
@@ -66,6 +66,7 @@
           <th>Number</th>
           <th>Username</th>
           <th>Labels</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -79,9 +80,14 @@
                 {{ label.name }}
               </nz-tag>
             </td>
+            <td>
+              <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove closed issue" (click)="removeClosedIssue(issue); $event.stopPropagation()">
+                <span nz-icon nzType="minus" nzTheme="outline"></span>
+              </button>
+            </td>
           </tr>
           <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
-            <td colspan="4" class="issue-details">
+            <td colspan="5" class="issue-details">
               <div>
                 <p><strong>Body:</strong> {{ issue.body }}</p>
                 <p><strong>Date:</strong> {{ issue.created_at | date }}</p>

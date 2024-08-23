@@ -28,7 +28,7 @@ export class CleanupReportComponent implements OnInit {
   constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
 
   ngOnInit(): void {
-      this.updateClosedIssues();
+    this.updateClosedIssues();
   }
 
   updateClosedIssues(): void {
@@ -42,8 +42,21 @@ export class CleanupReportComponent implements OnInit {
   
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
-  getClosedIssues(): any[] {
-    return this.closedIssues;
+
+  removeClosedIssue(issue: any): void {
+    if (!this.report || !this.report.flaggedissues) {
+      this.message.error('Report data is not available');
+      return;
+    }
+
+    const index = this.report.flaggedissues.findIndex((flaggedIssue: any) => flaggedIssue.number === issue.number);
+    if (index !== -1) {
+      this.report.flaggedissues.splice(index, 1);
+      this.updateClosedIssues();
+      this.message.success(`Removed closed issue #${issue.number} from flagged issues`);
+    } else {
+      this.message.error(`Issue #${issue.number} not found in flagged issues`);
+    }
   }
 
   saveReport(): void {
