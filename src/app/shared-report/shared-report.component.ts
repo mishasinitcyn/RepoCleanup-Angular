@@ -66,20 +66,18 @@ export class SharedReportComponent implements OnInit {
         }
         this.report = response;
         
-        if (!this.report.isopen) return of(null);
+        // if (!this.report.isopen) return of(null);
   
         return this.issuesService.getRepoMetadataByID(this.report.repoid);
       }),
       switchMap(repoMetadata => {
-        if (!this.report.isopen) return of(null);
+        // if (!this.report.isopen) return of(null);
   
         const owner = repoMetadata.owner.login;
         const repo = repoMetadata.name;
         const numbers = this.report.flaggedissues?.map((issue: any) => issue.number) || [];
         
-        if (numbers.length === 0) {
-          return of({ repoMetadata, issues: [] });
-        }
+        if (numbers.length === 0) return of({ repoMetadata, issues: [] });
   
         return this.issuesService.getIssuesByIssueNumbers(owner, repo, numbers).pipe(
           map(issues => ({ repoMetadata, issues }))

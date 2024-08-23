@@ -101,7 +101,7 @@
     </ng-container>
 
     <ng-template #closedReport>
-      <nz-alert nzType="info" nzMessage="This report has been closed" [nzDescription]="isRepoOwner ? 'You may add GitHub Actions below' : ''" nzShowIcon style="margin-bottom: 24px;"></nz-alert>
+      <nz-alert nzType="info" nzMessage="This report has been closed" [nzDescription]="isRepoOwner ? 'You may add GitHub Actions below' : ''" nzShowIcon style="margin-bottom: 24px;">{{isRepoOwner}}</nz-alert>
     </ng-template>
     
     <nz-card nzTitle="Recommended Actions" class="recommended-actions">
