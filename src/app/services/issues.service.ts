@@ -61,6 +61,43 @@ export class IssuesService {
     );
   }
 
+  blockUser(org: string, username: string): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.put(
+          `${environment.apiUrl}/github/${org}/block/${username}`,
+          {},
+          { headers }
+        );
+      }),
+      catchError(error => {
+        return throwError(() => new Error('Failed to block user'));
+      })
+    );
+  }
+
+  unblockUser(org: string, username: string): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.delete(
+          `${environment.apiUrl}/github/${org}/block/${username}`,
+          { headers }
+        );
+      }),
+      catchError(error => {
+        return throwError(() => new Error('Failed to unblock user'));
+      })
+    );
+  }
+
   getIssuesByIssueNumbers(owner: string, repo: string, numbers: number[]): Observable<any[]> {
     return this.authService.getToken().pipe(
       switchMap(token => {

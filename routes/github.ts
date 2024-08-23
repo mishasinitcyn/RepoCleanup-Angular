@@ -268,4 +268,53 @@ router.post('/callback', async (req, res) => {
   }
 });
 
+router.put('/:org/block/:username', async (req, res) => {
+  const { org, username } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.rest.orgs.blockUser({
+      org,
+      username,
+    });
+
+    return res.status(204).send();
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    if (error.status === 422) {
+      return res.status(422).json({ error: 'Unable to block the user' });
+    }
+    return res.status(error.status || 500).json({ error: 'Failed to block user' });
+  }
+});
+
+router.delete('/:org/block/:username', async (req, res) => {
+  const { org, username } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.rest.orgs.unblockUser({
+      org,
+      username,
+    });
+
+    return res.status(204).send();
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to unblock user' });
+  }
+});
+
 export const githubRouter = router;

@@ -42,8 +42,11 @@
                     <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Close issue as spam" nzTooltipColor="red" (click)="closeIssue(issue)" [disabled]="issue.status=='closed'|| !isRepoOwner">
                       <span nz-icon nzType="issues-close" nzTheme="outline"></span>
                     </button>
-                    <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Block user" nzTooltipColor="red" (click)="banUser(issue)" [disabled]="!isRepoOwner">
+                    <button *ngIf="!isUserBlocked(issue.user.login)" nz-button nzType="text" nz-tooltip nzTooltipTitle="Block user" nzTooltipColor="red" (click)="showUserConfirmation(issue, 'block')"  [disabled]="!isRepoOwner">
                       <span nz-icon nzType="user-delete" nzTheme="outline"></span>
+                    </button>
+                    <button *ngIf="isUserBlocked(issue.user.login)" nz-button nzType="text" nz-tooltip nzTooltipTitle="Unblock user" nzTooltipColor="green" (click)="showUserConfirmation(issue, 'unblock')"  [disabled]="!isRepoOwner">
+                      <span nz-icon nzType="user-add" nzTheme="outline"></span>
                     </button>
                   </td>
                 </tr>
@@ -101,7 +104,15 @@
     </ng-container>
 
     <ng-template #closedReport>
-      <nz-alert nzType="info" nzMessage="This report has been closed" [nzDescription]="isRepoOwner ? 'You may add GitHub Actions below' : ''" nzShowIcon style="margin-bottom: 24px;">{{isRepoOwner}}</nz-alert>
+      <article nz-typography>
+        <div class="repo-title">
+          <h1 nz-typography>{{repoData.repoMetadata.full_name}}</h1>
+          <a nz-button nzType="link" [href]="repoData.repoMetadata.html_url" target="_blank">
+            <span nz-icon nzType="github" nzTheme="outline"></span>
+          </a>
+        </div>
+      </article>
+      <nz-alert nzType="info" nzMessage="This report has been closed" [nzDescription]="isRepoOwner ? 'You may add GitHub Actions below' : ''" nzShowIcon style="margin-bottom: 24px; margin-top: 24px">{{isRepoOwner}}</nz-alert>
     </ng-template>
     
     <nz-card nzTitle="Recommended Actions" class="recommended-actions">

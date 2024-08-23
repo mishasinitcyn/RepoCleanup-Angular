@@ -6,6 +6,7 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { combineLatest, Observable, of, throwError } from 'rxjs';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
   selector: 'app-shared-report',
@@ -20,6 +21,7 @@ export class SharedReportComponent implements OnInit {
   isRepoOwner: boolean = false;
   currentUser: any;
   closedIssues: any[] = [];
+  blockedUsers: Set<string> = new Set();
 
   recommendedActions = [
     { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
@@ -27,7 +29,7 @@ export class SharedReportComponent implements OnInit {
     { name: "Add Templates", description: "Create templates for Issues and Pull Requests", icon: "file-text" },
   ];
 
-  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, private message: NzMessageService) {
+  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, private message: NzMessageService, private modal: NzModalService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 
@@ -192,28 +194,29 @@ export class SharedReportComponent implements OnInit {
     });
   }
 
-closeReport(): void {
-  if (!this.hasEditPermission()) {
-    this.message.error('You do not have permission to close this report.');
-    return;
-  }
+  closeReport(): void {
+    if (!this.hasEditPermission()) {
+      this.message.error('You do not have permission to close this report.');
+      return;
+    }
 
-  this.report.isopen = false;
+    this.report.isopen = false;
 
-  this.reportService.updateReport(this.report).pipe(
-    catchError(error => {
-      this.message.error('Failed to close the report. Please try again.');
-      return throwError(() => new Error('Failed to close report'));
-    })
-  ).subscribe(
-    (response) => {
-      if (response && response.report) {
-        this.report = response.report;
-        this.message.success('Report closed successfully');
-      } else {
-        this.message.warning('Report closed, but the response was unexpected');
+    this.reportService.updateReport(this.report).pipe(
+      catchError(error => {
+        this.message.error('Failed to close the report. Please try again.');
+        return throwError(() => new Error('Failed to close report'));
+      })
+    ).subscribe(
+      (response) => {
+        if (response && response.report) {
+          this.report = response.report;
+          this.message.success('Report closed successfully');
+        } else {
+          this.message.warning('Report closed, but the response was unexpected');
+        }
       }
-    });
+    );
   }
 
 
@@ -239,14 +242,73 @@ closeReport(): void {
     );
   }
 
-  banUser(issue: any): void {
-    if (!this.hasEditPermission()) {
-      this.message.error('You do not have permission to edit this report.');
+  showUserConfirmation(issue: any, action: 'block' | 'unblock'): void {
+    const title = action === 'block' ? `Block user ${issue.user.login}?` : `Unblock user ${issue.user.login}?`;
+    const content = action === 'block' ? 'Are you sure you want to block this user?' : 'Are you sure you want to unblock this user?';
+
+    this.modal.confirm({
+      nzTitle: title,
+      nzContent: content,
+      nzOkText: 'Yes',
+      nzNoAnimation: true,
+      nzOkType: 'primary',
+      nzOnOk: () => action === 'block' ? this.blockUser(issue) : this.unblockUser(issue),
+      nzCancelText: 'No',
+      nzBodyStyle: {
+        backgroundColor: 'black',
+        color: 'white',
+      },
+    });
+  }
+
+  blockUser(issue: any): void {
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can block users.');
       return;
     }
-    // TODO: Implement ban user logic
-    this.message.success(`Banned user ${issue.user.login}`);
+
+    const owner = this.repoData.repoMetadata.owner.login;
+    const username = issue.user.login;
+
+    this.issuesService.blockUser(owner, username).pipe(
+      catchError(error => {
+        this.message.error(`Failed to block user ${username}`);
+        return throwError(() => new Error('Failed to block user'));
+      })
+    ).subscribe(
+      () => {
+        this.message.success(`Blocked user ${username}`);
+        this.blockedUsers.add(username);
+      }
+    );
   }
+
+  unblockUser(issue: any): void {
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can unblock users.');
+      return;
+    }
+
+    const owner = this.repoData.repoMetadata.owner.login;
+    const username = issue.user.login;
+
+    this.issuesService.unblockUser(owner, username).pipe(
+      catchError(error => {
+        this.message.error(`Failed to unblock user ${username}`);
+        return throwError(() => new Error('Failed to unblock user'));
+      })
+    ).subscribe(
+      () => {
+        this.message.success(`Unblocked user ${username}`);
+        this.blockedUsers.delete(username);
+      }
+    );
+  }
+
+  isUserBlocked(username: string): boolean {
+    return this.blockedUsers.has(username);
+  }
+
 
   expandIssue(issue: any): void {
     const index = this.expandedIssueNumbers.indexOf(issue.number);
