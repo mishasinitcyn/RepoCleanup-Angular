@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { IssuesService } from '../services/issues.service';
 import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-landing-page',
@@ -14,7 +15,7 @@ export class LandingPageComponent {
   user$: Observable<any>;
   isDarkMode = true;
 
-  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) {
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService) {
     this.user$ = this.authService.getUser();
   }
 
@@ -25,6 +26,7 @@ export class LandingPageComponent {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
       // this.fetchRepoData_mock();
+      this.message.info("Please enter valid Github repository URL")
       return;
     }
 
