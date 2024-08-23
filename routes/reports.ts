@@ -91,11 +91,11 @@ router.post('/', async (req, res) => {
   }
   try {
     const query = `
-      INSERT INTO Reports (creatorID, repoID, repoOwnerID, flaggedissues)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (creatorID, repoID, isOpen)
+      INSERT INTO Reports (creatorID, repoID, repoOwnerID, flaggedIssues, isOpen)
+      VALUES ($1, $2, $3, $4, TRUE)
+      ON CONFLICT (creatorID, repoID) WHERE isOpen = TRUE
       DO UPDATE SET
-        flaggedissues = EXCLUDED.flaggedissues,
+        flaggedIssues = EXCLUDED.flaggedIssues,
         dateCreated = CURRENT_TIMESTAMP
       RETURNING reportID;
     `;
@@ -116,22 +116,21 @@ router.put('/:id', async (req, res) => {
     return res.status(400).json({ error: 'Invalid report ID' });
   }
 
-  const { flaggedissues } = req.body;
-  if (!flaggedissues) {
-    return res.status(400).json({ error: 'Missing required field: flaggedissues' });
+  const { flaggedissues, isopen } = req.body;
+  if (!flaggedissues || isopen === undefined) {
+    return res.status(400).json({ error: 'Missing required fields: flaggedissues or isopen' });
   }
 
   try {
-    // Ensure flaggedissues is properly formatted as JSON
     const flaggedissuesJson = JSON.stringify(flaggedissues);
 
     const query = `
       UPDATE Reports
-      SET flaggedissues = $1::jsonb
-      WHERE reportID = $2
+      SET flaggedissues = $1::jsonb, isopen = $2
+      WHERE reportID = $3
       RETURNING *;
     `;
-    const values = [flaggedissuesJson, reportId];
+    const values = [flaggedissuesJson, isopen, reportId];
     
     const result = await pool.query(query, values);
 

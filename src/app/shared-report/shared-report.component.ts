@@ -31,7 +31,7 @@ export class SharedReportComponent implements OnInit {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 
-  hasEditPermission(): boolean { return !!this.currentUser && (this.currentUser.id === this.report.creatorid || this.currentUser.id === this.repoData.repoMetadata.owner.id); }
+  hasEditPermission(): boolean { return !!this.currentUser && (this.currentUser.id == this.report.creatorid || this.currentUser.id === this.repoData.repoMetadata.owner.id); }
   getClosedIssues = (): any[] => this.closedIssues;
 
   ngOnInit(): void {
@@ -65,20 +65,31 @@ export class SharedReportComponent implements OnInit {
           throw new Error('No report found');
         }
         this.report = response;
+        
+        if (!this.report.isopen) return of(null);
+  
         return this.issuesService.getRepoMetadataByID(this.report.repoid);
       }),
       switchMap(repoMetadata => {
+        if (!this.report.isopen) return of(null);
+  
         const owner = repoMetadata.owner.login;
         const repo = repoMetadata.name;
-        const numbers = this.report.flaggedissues.map((issue: any) => issue.number);
+        const numbers = this.report.flaggedissues?.map((issue: any) => issue.number) || [];
         
+        if (numbers.length === 0) {
+          return of({ repoMetadata, issues: [] });
+        }
+  
         return this.issuesService.getIssuesByIssueNumbers(owner, repo, numbers).pipe(
           map(issues => ({ repoMetadata, issues }))
         );
       }),
       tap(repoData => {
-        this.repoData = repoData;
-        this.categorizeIssues();
+        if (this.report.isopen) {
+          this.repoData = repoData;
+          this.categorizeIssues();
+        }
       }),
       catchError(error => {
         if (error.message === 'No report found') {
@@ -179,6 +190,30 @@ export class SharedReportComponent implements OnInit {
   
         // Update the report
         this.updateReport();
+      }
+    });
+  }
+
+closeReport(): void {
+  if (!this.hasEditPermission()) {
+    this.message.error('You do not have permission to close this report.');
+    return;
+  }
+
+  this.report.isopen = false;
+
+  this.reportService.updateReport(this.report).pipe(
+    catchError(error => {
+      this.message.error('Failed to close the report. Please try again.');
+      return throwError(() => new Error('Failed to close report'));
+    })
+  ).subscribe(
+    (response) => {
+      if (response && response.report) {
+        this.report = response.report;
+        this.message.success('Report closed successfully');
+      } else {
+        this.message.warning('Report closed, but the response was unexpected');
       }
     });
   }

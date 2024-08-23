@@ -33,7 +33,11 @@ export class ReportService {
   }
 
   updateReport(report: any): Observable<any> {
-    return this.http.put(`${environment.apiUrl}/reports/${report.reportid}`, report).pipe(
+    const updatedReport = {
+      ...report,
+      isopen: report.isopen
+    };
+    return this.http.put(`${environment.apiUrl}/reports/${report.reportid}`, updatedReport).pipe(
       catchError(error => {
         return throwError(() => new Error('Failed to update report'));
       })
