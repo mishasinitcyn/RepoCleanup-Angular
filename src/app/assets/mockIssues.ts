@@ -1,6 +1,14 @@
-export const mockIssues: any[] = [
-    
-    {
+import { RepoData } from "../core/interface";
+
+
+export const mockIssues: RepoData = {
+    "repoMetadata": {
+        "id": "0",
+        "owner": {
+            "id": "0"
+        }
+    },
+    "issues": [{
         "url": "https://api.github.com/repos/mishasinitcyn/RepoCleanup-backend/issues/14",
         "repository_url": "https://api.github.com/repos/mishasinitcyn/RepoCleanup-backend",
         "labels_url": "https://api.github.com/repos/mishasinitcyn/RepoCleanup-backend/issues/14/labels{/name}",
@@ -632,5 +640,5 @@ export const mockIssues: any[] = [
         "timeline_url": "https://api.github.com/repos/mishasinitcyn/RepoCleanup-backend/issues/14/timeline",
         "performed_via_github_app": null,
         "state_reason": null
-    },
-]
+    }]
+};

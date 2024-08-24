@@ -1,12 +1,14 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { IssuesService } from '../issues.service';
-import { IssueLabel, SpamLabel } from '../interface';
+import { IssuesService } from '../services/issues.service';
+import { ReportService } from '../services/report.service';
+import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../core/interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { AuthService } from '../auth.service';
-import { Observable } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { Observable, of, forkJoin } from 'rxjs';
+import { switchMap, tap, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-issues',
@@ -15,32 +17,107 @@ import { Observable } from 'rxjs';
 })
 export class IssuesComponent implements OnInit {
   @ViewChild('githubNotification', { static: true }) githubNotification!: TemplateRef<{}>;
-
-  issues: any[] = [];
-  showAlert = false;
+  repoData: any;
+  report: any;
+  loadingClassification = false;
   isLoggedIn = false;
-  user$: Observable<any>;
   selectedTabIndex = 0;
 
-  constructor(private issuesService: IssuesService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {
-    this.user$ = this.authService.getUser();
-  }
+  hasSpamLabel = (issue: any): boolean => issue.labels.some((label: any) => label.name === 'spam');
+  onTabChange = (event: any): void => this.selectedTabIndex = event.index;
+  getLabelColor = (label: string): string => colorMapping[label.toLowerCase()] || 'default';
 
+  constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {}
+  
   ngOnInit(): void {
-    this.issues = this.issuesService.getIssues();
+    this.initializeRepoData();
     this.checkLoginStatus();
   }
 
-  login() {
-    this.authService.login();
+  private initializeRepoData(): void {
+    this.issuesService.getRepoData().pipe(
+      tap(this.updateRepoData.bind(this)),
+      switchMap(this.fetchOpenReport.bind(this)),
+      switchMap(this.handleOpenReportResponse.bind(this)),
+      switchMap(this.fetchMissingIssues.bind(this))
+    ).subscribe(
+      () => {
+        this.applyExistingReportLabels();
+        this.sortIssues();
+      },
+      error => this.message.error('Error initializing data: ' + error.message)
+    );
+  }
+  
+  private updateRepoData(repoData: any): void {
+    this.repoData = repoData;
+  }
+  
+  private fetchOpenReport(repoData: any): Observable<any> {
+    if (repoData) {
+      return this.authService.getUser().pipe(
+        switchMap(user => {
+          if (user) {
+            return this.reportService.getOpenReport(user.id, repoData.repoMetadata.id);
+          }
+          return of({ exists: false, report: null });
+        })
+      );
+    }
+    return of({ exists: false, report: null });
   }
 
+  private handleOpenReportResponse(response: { exists: boolean, report: any }): Observable<any> {
+    if (response.exists && response.report) {
+      this.report = response.report;
+      // this.message.success("Existing report imported");
+      return of(this.report);
+    }
+    return of(null);
+  }
+
+  private fetchMissingIssues(report: any): Observable<any> {
+    if (!report || !this.repoData) return of(null);
+    const existingIssueNumbers = new Set(this.repoData.issues.map((issue: any) => issue.number));
+    const missingIssueNumbers = report.flaggedissues
+      .filter((issue: FlaggedIssue) => !existingIssueNumbers.has(issue.number))
+      .map((issue: FlaggedIssue) => issue.number);
+
+    if (missingIssueNumbers.length === 0) return of(null);
+
+    return this.issuesService.getIssuesByIssueNumbers(
+      this.repoData.repoMetadata.owner.login,
+      this.repoData.repoMetadata.name,
+      missingIssueNumbers
+    ).pipe(
+      tap(missingIssues => {
+        missingIssues.forEach((issue: any) => {
+          const flaggedIssue = report.flaggedissues.find((fi: FlaggedIssue) => fi.number === issue.number);
+          if (flaggedIssue) {
+            flaggedIssue.state = issue.state;
+          }
+          this.repoData.issues.push(issue);
+        });
+      })
+    );
+  }
+
+  private applyExistingReportLabels(): void {
+    if (!this.report || !this.report.flaggedissues) return;
+
+    this.report.flaggedissues.forEach((flaggedIssue: FlaggedIssue) => {
+      const issue = this.repoData.issues.find((issue: any) => issue.number === flaggedIssue.number);
+      if (issue) {
+        this.addSpamLabel(issue);
+        issue.state = flaggedIssue.state;
+      }
+    });
+  }
+  
   checkLoginStatus(): void {
     this.authService.getToken().subscribe(token => {
-      this.isLoggedIn = !!token;
-      if (!this.isLoggedIn) {
-        this.showGithubNotification();
-      }
+      this.isLoggedIn = Boolean(token);
+      if (!this.isLoggedIn) this.showGithubNotification();
     });
   }
 
@@ -48,24 +125,23 @@ export class IssuesComponent implements OnInit {
     this.notification.template(this.githubNotification, {
       nzData: { title: 'GitHub Login', content: 'Please log in for full functionality' },
       nzPlacement: 'topRight',
-      nzCloseIcon: undefined,
-      nzDuration: 0
+      nzCloseIcon: ' ' as string,
+      nzDuration: 2000
     });
   }
+
   detectSpam(): void {
-    if (!this.issues.length){
-      return
-    }
-    this.showAlert = true;
-    this.issuesService.sendIssues(this.issues).subscribe(
+    if (!this.repoData || !this.repoData.issues.length) return;
+    
+    this.loadingClassification = true;
+    this.issuesService.sendIssues(this.repoData.issues).subscribe(
       (response: IssueLabel[]) => {
-        this.showAlert = false;
-        console.log(response);
+        this.loadingClassification = false;
         this.updateIssuesWithSpamLabels(response);
         this.sortIssues();
       },
       (error) => {
-        console.error('Error sending issues:', error);
+        this.message.error("Error detecting spam")
       }
     );
   }
@@ -73,7 +149,7 @@ export class IssuesComponent implements OnInit {
   updateIssuesWithSpamLabels(IssueLabels: IssueLabel[]): void {
     IssueLabels.forEach(IssueLabel => {
       if (IssueLabel.label.toLowerCase() === 'spam') {
-        const issue = this.issues.find(issue => issue.id === IssueLabel.id);
+        const issue = this.repoData.issues.find((issue: any) => issue.number === IssueLabel.number);
         if (issue) {
           issue.labels = issue.labels || [];
           if (!issue.labels.some((label: any) => label.name === 'spam')) {
@@ -85,57 +161,13 @@ export class IssuesComponent implements OnInit {
   }
 
   sortIssues(): void {
-    this.issues.sort((a, b) => {
+    this.repoData.issues.sort((a: any, b: any) => {
       const aIsSpam = a.labels.some((label: any) => label.name === 'spam');
       const bIsSpam = b.labels.some((label: any) => label.name === 'spam');
-      return (aIsSpam === bIsSpam) ? 0 : aIsSpam ? -1 : 1;
-    });
-  }
-
-  getLabelColor(label: string): string {
-    const colorMapping: { [key: string]: string } = {
-      'spam': 'red',
-      'bug': 'orange',
-      'feature': 'blue',
-      'discussion': 'purple',
-      'good-first-issue': 'teal',
-      'suggestion': 'yellow'
-    };
-    return colorMapping[label.toLowerCase()] || 'default';
-  }
-
-  hasSpamLabel(issue: any): boolean {
-    return issue.labels.some((label: any) => label.name === 'spam');
-  }
-
-  showRemoveSpamModal(issue: any): void {
-    this.modal.confirm({
-      nzTitle: 'Remove spam label?',
-      nzOnOk: () => this.removeSpamLabel(issue),
-      nzOnCancel: () => console.log('Cancel'),
-      nzNoAnimation: true,
-      nzOkText: 'Yes',
-      nzCancelText: 'No',
-      nzBodyStyle: {
-        backgroundColor: 'black',
-        color: 'white'
-      },
-    });
-  }
-
-
-  showAddSpamModal(issue: any): void {
-    this.modal.confirm({
-      nzTitle: 'Is this spam?',
-      nzOnOk: () => this.addSpamLabel(issue),
-      nzOnCancel: () => console.log('Cancel'),
-      nzNoAnimation: true,
-      nzOkText: 'Yes',
-      nzCancelText: 'No',
-      nzBodyStyle: {
-        backgroundColor: 'black',
-        color: 'white'
-      },
+      if (aIsSpam === bIsSpam) {
+        return a.state === 'closed' ? 1 : -1; // Open issues first
+      }
+      return aIsSpam ? -1 : 1; // Spam issues first
     });
   }
 
@@ -147,16 +179,23 @@ export class IssuesComponent implements OnInit {
     }
   }
 
-  getSpamIssues(): any[] {
-    return this.issues.filter(issue => this.hasSpamLabel(issue));
-  }
-
   removeSpamLabel(issue: any): void {
     issue.labels = issue.labels.filter((label: any) => label.name !== 'spam');
     this.sortIssues();
   }
 
-  onTabChange(event: any): void {
-    this.selectedTabIndex = event.index;
+  showSpamModal(issue: any, action: 'add' | 'remove'): void {
+    const isRemoveAction = action === 'remove';
+    this.modal.confirm({
+      nzTitle: isRemoveAction ? 'Remove spam label?' : 'Is this spam?',
+      nzOnOk: () => isRemoveAction ? this.removeSpamLabel(issue) : this.addSpamLabel(issue),
+      nzNoAnimation: true,
+      nzOkText: 'Yes',
+      nzCancelText: 'No',
+      nzBodyStyle: {
+        backgroundColor: 'black',
+        color: 'white'
+      },
+    });
   }
 }

@@ -11,62 +11,46 @@
   </div>
 </ng-template>
 
-<nz-page-header>
-  <!-- Avatar -->
-  <nz-avatar nz-page-header-avatar [nzSrc]="'assets/icon.svg'" nzSize="large" nzShape="square"></nz-avatar>
-  
-  <!-- Title and Subtitle -->
-  <nz-page-header-title>RepoCleanup</nz-page-header-title>
-  <nz-page-header-subtitle>Decluttering open-source projects</nz-page-header-subtitle>
-
-  <!-- Github Logo / User Avatar -->
-  <nz-page-header-extra>
-    <nz-avatar *ngIf="user$ | async as user; else githubIcon" nz-page-header-avatar  nzSize="large" [nzSrc]="user.avatar_url"> </nz-avatar>
-    <ng-template #githubIcon>
-      <nz-avatar nz-page-header-avatar nzIcon="github"  nzSize="large" [nzSrc]="'assets/github.svg'" (click)="login()"></nz-avatar>
-    </ng-template>
-  </nz-page-header-extra>
-
-  <!-- Footer with tabs -->
-  <nz-page-header-footer>
+<app-layout>
+  <ng-container headerFooter>
     <nz-tabset [nzSelectedIndex]="selectedTabIndex" (nzSelectChange)="onTabChange($event)">
       <nz-tab nzTitle="Issues"></nz-tab>
       <nz-tab nzTitle="Cleanup Report"></nz-tab>
     </nz-tabset>
-  </nz-page-header-footer>
-</nz-page-header>
-
-<div [ngSwitch]="selectedTabIndex">
-  <ng-container *ngSwitchCase="0">
-    <div class="button-container">
-      <button nz-button nzType="primary" (click)="detectSpam()" [nzLoading]="showAlert">
-        Detect Spam
-      </button>
-    </div>
-    <div class="issues-page">
-      <div *ngIf="issues.length === 0" style="text-align: center;">
-        <h2>No issues found.</h2>
-      </div>
-
-      <div *ngIf="issues.length > 0" style="padding: 20px;">
-        <nz-card *ngFor="let issue of issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showRemoveSpamModal(issue) : showAddSpamModal(issue)" style="margin-bottom: 20px;">
-          <h1>{{ issue.title }}</h1>
-          <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
-          <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
-            <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
-              {{ label.name }}
-            </nz-tag>
-          </div>
-        </nz-card>
-      </div>
-    </div>
   </ng-container>
 
-  <ng-container *ngSwitchCase="1">
-    <app-cleanup-report
-      [spamIssues]="getSpamIssues()"
-      [totalIssues]="issues.length"
-      (removeSpamLabelEvent)="removeSpamLabel($event)">
-    </app-cleanup-report>
-  </ng-container>
-</div>
+  <div [ngSwitch]="selectedTabIndex">
+    <ng-container *ngSwitchCase="0">
+      <!-- <div class="button-container">
+        <button nz-button nzType="primary" (click)="detectSpam()" [nzLoading]="loadingClassification">
+          Detect Spam
+        </button>
+      </div> -->
+      <div class="issues-page">
+        <div *ngIf="repoData?.issues.length === 0 || !repoData" style="text-align: center;">
+          <h2>No issues found.</h2>
+        </div>
+  
+        <div *ngIf="repoData?.issues.length > 0" style="padding: 20px;">
+          <nz-card *ngFor="let issue of repoData?.issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showSpamModal(issue, 'remove') : showSpamModal(issue, 'add')" style="margin-bottom: 20px;">
+            <h1>{{ issue.title }}</h1>
+            <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
+            <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
+              <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+                {{ label.name }}
+              </nz-tag>
+            </div>
+          </nz-card>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngSwitchCase="1">
+      <app-cleanup-report
+        [repoData]="repoData"
+        [report]="report"
+        (removeSpamLabelEvent)="removeSpamLabel($event)">
+      </app-cleanup-report>
+    </ng-container>
+  </div>
+</app-layout>

@@ -1,10 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { IssuesService } from '../issues.service';
-import { mockIssues } from './mockIssues';
-import { AuthService } from '../auth.service';
+import { IssuesService } from '../services/issues.service';
+import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-landing-page',
@@ -14,51 +13,38 @@ import { Observable } from 'rxjs';
 export class LandingPageComponent {
   repoUrl: string = '';
   user$: Observable<any>;
-  mockIssues: any[] = mockIssues;
-  svgs: { path: string, color: string, position: { top: string, left: string } }[] = [];
   isDarkMode = true;
-  
-  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService) {
+
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService) {
     this.user$ = this.authService.getUser();
   }
-  
 
+  login = () => this.authService.login();
+  logout = () => this.authService.logout();
 
-  ngOnInit(): void { }
-
-  login() {
-    this.authService.login();
-  }
-
-  logout() {
-    this.authService.logout();
-  }
-
-  fetchIssues(isGuest: boolean = false) {
+  fetchRepoData() {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      this.fetchIssues_mock();
+      // this.fetchRepoData_mock();
+      this.message.info("Please enter valid Github repository URL")
       return;
     }
 
     const [owner, repo] = repoPath.split('/');
+    this.issuesService.fetchRepoData(owner, repo).subscribe(
+      repoData => this.router.navigate(['/issues']),
+      error => alert('Error fetching repository data')
+    );
+  }
 
-    this.issuesService.fetchIssues(owner, repo).subscribe(
-      data => {
-        this.issuesService.setIssues(data);
-        this.router.navigate(['/issues']);
-      },
-      error => alert('Error fetching issues')
+  fetchRepoData_mock(): void {
+    this.issuesService.fetchRepoData('mock', 'mock').subscribe(
+      () => this.router.navigate(['/issues']),
     );
   }
 
   private extractRepoPath(url: string): string | null {
     const match = url.match(/^https:\/\/github\.com\/([^\/]+\/[^\/]+)/);
     return match ? match[1] : null;
-  }
-
-  fetchIssues_mock(): void {
-    this.issuesService.setIssues(this.mockIssues);
-    this.router.navigate(['/issues']);
   }
 }

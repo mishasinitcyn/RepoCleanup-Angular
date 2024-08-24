@@ -1,17 +1,20 @@
 // src/styles.less
-@import "../node_modules/ng-zorro-antd/ng-zorro-antd.less";
+@import "../node_modules/ng-zorro-antd/ng-zorro-antd.dark.less";
 
+// @primary-color: #1DA57A;
+// @link-color: #1DA57A;
+// @border-radius-base: 2px;
 
-// Override variables
-@primary-color: #1DA57A;
-@link-color: #1DA57A;
-@border-radius-base: 2px;
+@modal-content-border-color: white;
+@modal-content-border-width: 1px;
+@modal-content-border-style: solid;
 
 /* src/styles.less or src/styles.css */
 html, body {
     height: 100%;
     margin: 0;
   }
-  
-  
-  
+
+.ant-modal-content {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

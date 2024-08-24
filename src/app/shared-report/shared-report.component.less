@@ -1,0 +1,95 @@
+.shared-report {
+  margin: 0;
+  margin-top: 50px;
+  height: 100%;
+  display: block;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  color: #fff;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -9;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
+    background-size: 14px 24px;
+    mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
+  }
+
+  .repo-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  
+    h1 {
+      margin-bottom: 0;
+    }
+
+    a {
+      all: none;
+    }
+  }
+
+  p {
+    margin-top: 16px;
+    margin-bottom: 24px;
+  }
+
+  nz-card {
+    width: 100%;
+    margin-bottom: 24px;
+    // background-color: #1f1f1f;
+    background-color: #090909;
+    border-color: #303030;
+
+    ::ng-deep .ant-card-head {
+      border-color: #303030;
+    }
+  }
+
+  .ant-table {
+    background-color: transparent;
+  }
+
+  tr {
+    cursor: pointer;
+  }
+
+  .issue-details {
+    background-color: #090909;
+    border: 1px solid #303030;
+  }
+
+  .download-buttons {
+    display: flex;
+    justify-content: flex-start;
+
+    button {
+      margin-right: 12px;
+      font-size: 12px;
+      height: 28px;
+      padding: 0 12px;
+    }
+  }
+
+  .recommended-actions {
+    ::ng-deep .ant-list-item {
+      border-color: #303030;
+    }
+
+    [nz-icon] {
+      font-size: 24px;
+      margin-right: 16px;
+    }
+  }
+  .disabled-action {
+    opacity: 0.5;
+  }
+  .loading-action {
+    opacity: 0.7;
+  }
+}

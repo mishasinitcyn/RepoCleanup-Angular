@@ -1,0 +1,35 @@
+<nz-page-header>
+  <!-- Avatar -->
+  <nz-avatar nz-page-header-avatar [nzSrc]="'assets/icon.svg'" nzSize="large" nzShape="square"></nz-avatar>
+  
+  <!-- Title and Subtitle -->
+  <nz-page-header-title>RepoCleanup</nz-page-header-title>
+  <!-- <nz-page-header-subtitle>Decluttering open-source projects</nz-page-header-subtitle> -->
+
+  <!-- Github Logo / User Avatar -->
+  <nz-page-header-extra>
+    <nz-avatar *ngIf="user$ | async as user; else githubIcon" nz-page-header-avatar nzSize="large" [nzSrc]="user.avatar_url"></nz-avatar>
+    <ng-template #githubIcon>
+      <div nz-tooltip nzTooltipTitle="Log in with Github" nzTooltipPlacement="bottom">
+        <nz-avatar nz-page-header-avatar nzIcon="github" nzSize="large" [nzSrc]="'assets/github.svg'" (click)="login()" style="cursor: pointer;"></nz-avatar>
+      </div>
+    </ng-template>
+  </nz-page-header-extra>
+
+  <!-- Footer -->
+  <nz-page-header-footer>
+    <ng-content select="[headerFooter]"></ng-content>
+  </nz-page-header-footer>
+</nz-page-header>
+
+<ng-template #githubNotification let-nzData="nzData">
+    <div class="ant-notification-notice-content">
+      <div class="ant-notification-notice-with-icon">
+        <span class="ant-notification-notice-icon">
+          <span nz-icon nzType="github"></span>
+        </span>
+        <div class="ant-notification-notice-message">Please log in for full functionality</div>
+        <div class="ant-notification-notice-description">Unlimited queries, admin features. and more</div>
+      </div>
+    </div>
+  </ng-template>
