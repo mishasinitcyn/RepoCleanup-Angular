@@ -7,6 +7,16 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { ActionsService } from '../services/actions.service';
+
+interface RecommendedAction {
+  name: string;
+  description: string;
+  icon: string;
+  functionCall: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}
 
 @Component({
   selector: 'app-shared-report',
@@ -23,13 +33,10 @@ export class SharedReportComponent implements OnInit {
   closedIssues: any[] = [];
   blockedUsers: Set<string> = new Set();
 
-  recommendedActions = [
-    { name: "Secure Main Branch", description: "Protect your main branch from direct pushes", icon: "safety" },
-    { name: "Require PR Approvals", description: "Set up a rule to require 2 approvals for PRs", icon: "team" },
-    { name: "Add Templates", description: "Create templates for Issues and Pull Requests", icon: "file-text" },
-  ];
+  recommendedActions: RecommendedAction[] = [];
 
-  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, private message: NzMessageService, private modal: NzModalService) {
+  constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, 
+              private message: NzMessageService, private modal: NzModalService, private actionsService: ActionsService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 
@@ -40,10 +47,37 @@ export class SharedReportComponent implements OnInit {
     this.fetchReportAndCheckOwnership();
   }
 
+  initializeRecommendedActions() {
+    this.recommendedActions = [
+      { 
+        name: "Secure Main Branch", 
+        description: "Protect your main branch from direct pushes", 
+        icon: "safety", 
+        functionCall: () => this.secureMainBranch(),
+        loading: false
+      },
+      { 
+        name: "Require PR Approvals", 
+        description: "Set up a rule to require 2 approvals for PRs", 
+        icon: "team", 
+        functionCall: () => this.requirePRApprovals(),
+        disabled: this.repoData?.repoMetadata?.private,
+        loading: false
+      },
+      { 
+        name: "Add Templates", 
+        description: "Create templates for Issues and Pull Requests", 
+        icon: "file-text", 
+        functionCall: () => this.addTemplates(),
+        loading: false
+      },
+    ];
+  }
+
   fetchReportAndCheckOwnership(): void {
     const report$ = this.fetchReport();
     const user$ = this.authService.getUser();
-
+  
     combineLatest([report$, user$]).pipe(
       map(([repoData, user]) => {
         this.currentUser = user;
@@ -54,6 +88,7 @@ export class SharedReportComponent implements OnInit {
       }),
       tap(repoData => {
         this.repoData = repoData;
+        this.initializeRecommendedActions(); // Initialize actions after setting repoData
       })
     ).subscribe({
       error: (error) => this.message.error('An error occurred while fetching the report data.')
@@ -68,13 +103,9 @@ export class SharedReportComponent implements OnInit {
         }
         this.report = response;
         
-        // if (!this.report.isopen) return of(null);
-  
         return this.issuesService.getRepoMetadataByID(this.report.repoid);
       }),
       switchMap(repoMetadata => {
-        // if (!this.report.isopen) return of(null);
-  
         const owner = repoMetadata.owner.login;
         const repo = repoMetadata.name;
         const numbers = this.report.flaggedissues?.map((issue: any) => issue.number) || [];
@@ -219,7 +250,6 @@ export class SharedReportComponent implements OnInit {
     );
   }
 
-
   updateReport(): Observable<any> {
     const updatedReport = {
       ...this.report,
@@ -309,7 +339,6 @@ export class SharedReportComponent implements OnInit {
     return this.blockedUsers.has(username);
   }
 
-
   expandIssue(issue: any): void {
     const index = this.expandedIssueNumbers.indexOf(issue.number);
     if (index === -1) {
@@ -317,5 +346,98 @@ export class SharedReportComponent implements OnInit {
     } else {
       this.expandedIssueNumbers.splice(index, 1);
     }
+  }
+
+  secureMainBranch(): void {
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can perform this action.');
+      return;
+    }
+  
+    const action = this.recommendedActions.find(a => a.name === "Secure Main Branch");
+    if (action) action.loading = true;
+  
+    const owner = this.repoData.repoMetadata.owner.login;
+    const repo = this.repoData.repoMetadata.name;
+  
+    this.actionsService.secureMainBranch(owner, repo).pipe(
+      catchError(error => {
+        if (action) action.loading = false;
+        if (error.message === 'No authentication token available') {
+          this.message.error('You need to be authenticated to perform this action. Please log in.');
+          this.authService.login();
+        } else {
+          this.message.error('Failed to secure main branch. Please try again.');
+        }
+        return throwError(() => error);
+      })
+    ).subscribe(
+      () => {
+        if (action) action.loading = false;
+        this.message.success('Main branch secured successfully');
+      }
+    );
+  }
+  
+  requirePRApprovals(): void {
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can perform this action.');
+      return;
+    }
+  
+    const action = this.recommendedActions.find(a => a.name === "Require PR Approvals");
+    if (action) action.loading = true;
+  
+    const owner = this.repoData.repoMetadata.owner.login;
+    const repo = this.repoData.repoMetadata.name;
+  
+    this.actionsService.requirePRApprovals(owner, repo).pipe(
+      catchError(error => {
+        if (error.message === 'No authentication token available') {
+          this.message.error('You need to be authenticated to perform this action. Please log in.');
+          this.authService.login();
+        } else {
+          if (action) action.loading = false;
+          this.message.error('Failed to set PR approval rule. Please try again.');
+        }
+        return throwError(() => error);
+      }),
+    ).subscribe(
+      () => {
+        if (action) action.loading = false;
+        this.message.success('PR approval rule set successfully');
+      }
+    );
+  }
+  
+  addTemplates(): void {
+    if (!this.isRepoOwner) {
+      this.message.error('Only repository owners can perform this action.');
+      return;
+    }
+  
+    const action = this.recommendedActions.find(a => a.name === "Add Templates");
+    if (action) action.loading = true;
+  
+    const owner = this.repoData.repoMetadata.owner.login;
+    const repo = this.repoData.repoMetadata.name;
+  
+    this.actionsService.addTemplates(owner, repo).pipe(
+      catchError(error => {
+        if (action) action.loading = false;
+        if (error.message === 'No authentication token available') {
+          this.message.error('You need to be authenticated to perform this action. Please log in.');
+          this.authService.login();
+        } else {
+          this.message.info("Couldn't add templates. Check .github folder");
+        }
+        return throwError(() => error);
+      })
+    ).subscribe(
+      () => {
+        if (action) action.loading = false;
+        this.message.success('Templates added successfully');
+      }
+    );
   }
 }

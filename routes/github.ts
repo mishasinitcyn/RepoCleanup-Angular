@@ -317,4 +317,149 @@ router.delete('/:org/block/:username', async (req, res) => {
   }
 });
 
+
+
+
+router.post('/:owner/:repo/secure-main-branch', async (req, res) => {
+  const { owner, repo } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.repos.updateBranchProtection({
+      owner,
+      repo,
+      branch: 'main',
+      required_status_checks: null,
+      enforce_admins: true,
+      restrictions: null,
+      required_pull_request_reviews: null,
+      required_linear_history: true,
+      allow_force_pushes: false,
+      allow_deletions: false,
+    });
+
+    return res.status(200).json({ message: 'Main branch secured successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to secure main branch' });
+  }
+});
+
+router.post('/:owner/:repo/require-pr-approvals', async (req, res) => {
+  const { owner, repo } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    await octokit.repos.updateBranchProtection({
+      owner,
+      repo,
+      branch: 'main',
+      required_status_checks: null,
+      enforce_admins: true,
+      restrictions: null,
+      required_pull_request_reviews: {
+        dismissal_restrictions: {},
+        dismiss_stale_reviews: true,
+        require_code_owner_reviews: false,
+        required_approving_review_count: 2,
+      },
+    });
+
+    return res.status(200).json({ message: 'PR approval rule set successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to set PR approval rule' });
+  }
+});
+
+router.post('/:owner/:repo/add-templates', async (req, res) => {
+  const { owner, repo } = req.params;
+  const token = req.headers.authorization?.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const octokit = new Octokit({ auth: token });
+
+    const issueTemplate = `
+# Issue Title
+
+## Description
+[Provide a brief description of the issue]
+
+## Steps to Reproduce
+1. [First Step]
+2. [Second Step]
+3. [and so on...]
+
+## Expected Behavior
+[What you expect to happen]
+
+## Actual Behavior
+[What actually happens]
+
+## Additional Information
+[Any additional information, configuration or data that might be necessary to reproduce the issue]
+    `;
+
+    const prTemplate = `
+# Pull Request Title
+
+## Description
+[Provide a brief description of the changes in this PR]
+
+## Related Issue
+[If applicable, link to the issue this PR addresses]
+
+## Proposed Changes
+- [Change 1]
+- [Change 2]
+- [Change 3]
+
+## Additional Information
+[Any additional information or context about the changes]
+
+## Checklist
+- [ ] Tests
+- [ ] Documentation
+- [ ] [Any other relevant checklist items]
+    `;
+
+    await octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: '.github/ISSUE_TEMPLATE.md',
+      message: 'Add issue template',
+      content: Buffer.from(issueTemplate).toString('base64'),
+    });
+
+    await octokit.repos.createOrUpdateFileContents({
+      owner,
+      repo,
+      path: '.github/PULL_REQUEST_TEMPLATE.md',
+      message: 'Add pull request template',
+      content: Buffer.from(prTemplate).toString('base64'),
+    });
+
+    return res.status(200).json({ message: 'Templates added successfully' });
+  } catch (error: any) {
+    console.error('GitHub API error:', error);
+    return res.status(error.status || 500).json({ error: 'Failed to add templates' });
+  }
+});
+
 export const githubRouter = router;
