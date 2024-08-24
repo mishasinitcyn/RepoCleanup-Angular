@@ -32,6 +32,7 @@ import { NzFlexModule } from 'ng-zorro-antd/flex';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NzMessageModule } from 'ng-zorro-antd/message';
@@ -85,6 +86,7 @@ import { LayoutComponent } from './assets/layout/layout.component';
     NzSpinModule,
     NzListModule,
     NzGridModule,
+    NzPaginationModule,
     NzIconModule.forRoot(icons),
     NzModalModule,
     NzTypographyModule,

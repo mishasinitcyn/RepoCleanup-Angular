@@ -66,6 +66,7 @@ router.get('/:repoid/metadata', async (req, res) => {
 
 router.get('/:owner/:repo/issues', async (req, res) => {
   const { owner, repo } = req.params;
+  const { page = 1, open_issues_count } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
   
   try {
@@ -83,13 +84,54 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       });
     }
     
-    const { data: issues } = await octokit.issues.listForRepo({owner, repo, per_page: token ? 30 : 10, state: 'open'});
-    return res.json(issues);
+    const perPage = token ? 30 : 10;
+    
+    const { data: issues, headers } = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      per_page: perPage,
+      state: 'open',
+      page: Number(page)
+    });
+
+    const totalIssues = Number(open_issues_count);
+    const totalPages = Math.ceil(totalIssues / perPage);
+
+    const response = {
+      issues,
+      pagination: {
+        currentPage: Number(page),
+        perPage,
+        totalPages,
+        totalIssues,
+        hasNextPage: Number(page) < totalPages,
+        hasPreviousPage: Number(page) > 1,
+        nextPage: Number(page) < totalPages ? Number(page) + 1 : null,
+        prevPage: Number(page) > 1 ? Number(page) - 1 : null,
+      }
+    };
+
+    return res.json(response);
   } catch (error: any) {
     console.error('GitHub API error:', error);
     return res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
   }
 });
+
+// Helper function to parse the Link header
+function parseLinkHeader(header: string | undefined): Record<string, string> {
+  if (!header) return {};
+  const links = header.split(',');
+  const parsed: Record<string, string> = {};
+  links.forEach(link => {
+    const section = link.split(';');
+    if (section.length !== 2) return;
+    const url = section[0].replace(/<(.*)>/, '$1').trim();
+    const name = section[1].replace(/rel="(.*)"/, '$1').trim();
+    parsed[name] = url;
+  });
+  return parsed;
+}
 
 router.get('/:owner/:repo/issues/numbers', async (req, res) => {
   const { owner, repo } = req.params;
