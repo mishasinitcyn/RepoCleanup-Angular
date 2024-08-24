@@ -4,7 +4,7 @@ import { QueryResult } from 'pg';
 
 const router = express.Router();
 
-interface ReportResponse {
+interface Report {
   reportid: Number;
   creatorid: String;
   datecreated: Date;
@@ -31,7 +31,7 @@ router.get('/:id', async (req, res) => {
 
     const report = result.rows[0];
 
-    const response: ReportResponse = {
+    const response: Report = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
@@ -67,7 +67,7 @@ router.get('/open/:creatorID/:repoID', async (req, res) => {
 
     const report = result.rows[0];
 
-    const response: ReportResponse = {
+    const response: Report = {
       reportid: report.reportid,
       creatorid: report.creatorid,
       datecreated: report.datecreated,
@@ -91,11 +91,11 @@ router.post('/', async (req, res) => {
   }
   try {
     const query = `
-      INSERT INTO Reports (creatorID, repoID, repoOwnerID, flaggedissues)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (creatorID, repoID, isOpen)
+      INSERT INTO Reports (creatorID, repoID, repoOwnerID, flaggedIssues, isOpen)
+      VALUES ($1, $2, $3, $4, TRUE)
+      ON CONFLICT (creatorID, repoID) WHERE isOpen = TRUE
       DO UPDATE SET
-        flaggedissues = EXCLUDED.flaggedissues,
+        flaggedIssues = EXCLUDED.flaggedIssues,
         dateCreated = CURRENT_TIMESTAMP
       RETURNING reportID;
     `;
@@ -107,6 +107,52 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('Error saving report:', err);
     return res.status(500).json({ error: 'An error occurred while saving the report' });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const reportId = parseInt(req.params.id);
+  if (isNaN(reportId)) {
+    return res.status(400).json({ error: 'Invalid report ID' });
+  }
+
+  const { flaggedissues, isopen } = req.body;
+  if (!flaggedissues || isopen === undefined) {
+    return res.status(400).json({ error: 'Missing required fields: flaggedissues or isopen' });
+  }
+
+  try {
+    const flaggedissuesJson = JSON.stringify(flaggedissues);
+
+    const query = `
+      UPDATE Reports
+      SET flaggedissues = $1::jsonb, isopen = $2
+      WHERE reportID = $3
+      RETURNING *;
+    `;
+    const values = [flaggedissuesJson, isopen, reportId];
+    
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const updatedReport = result.rows[0];
+    const response: Report = {
+      reportid: updatedReport.reportid,
+      creatorid: updatedReport.creatorid,
+      datecreated: updatedReport.datecreated,
+      isopen: updatedReport.isopen,
+      repoid: updatedReport.repoid,
+      repoownerid: updatedReport.repoownerid,
+      flaggedissues: updatedReport.flaggedissues
+    };
+
+    return res.json({ message: 'Report updated successfully', report: response });
+  } catch (err) {
+    console.error('Error updating report:', err);
+    return res.status(500).json({ error: 'An error occurred while updating the report' });
   }
 });
 
@@ -135,5 +181,7 @@ router.delete('/:creatorID/:repoID', async (req, res) => {
     return res.status(500).json({ error: 'An error occurred while deleting the report' });
   }
 });
+
+
 
 export const reportsRouter = router;

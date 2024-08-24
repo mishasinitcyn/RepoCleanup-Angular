@@ -40,8 +40,8 @@
               }
             ],
             "styles": [
-              "src/styles.less",
-              "node_modules/ng-zorro-antd/ng-zorro-antd.dark.css"
+              "node_modules/ng-zorro-antd/ng-zorro-antd.dark.less",
+              "src/styles.less"
             ],
             "scripts": [],
             "server": "src/main.server.ts",

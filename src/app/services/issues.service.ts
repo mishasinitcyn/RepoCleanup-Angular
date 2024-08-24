@@ -61,6 +61,43 @@ export class IssuesService {
     );
   }
 
+  blockUser(org: string, username: string): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.put(
+          `${environment.apiUrl}/github/${org}/block/${username}`,
+          {},
+          { headers }
+        );
+      }),
+      catchError(error => {
+        return throwError(() => new Error('Failed to block user'));
+      })
+    );
+  }
+
+  unblockUser(org: string, username: string): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.delete(
+          `${environment.apiUrl}/github/${org}/block/${username}`,
+          { headers }
+        );
+      }),
+      catchError(error => {
+        return throwError(() => new Error('Failed to unblock user'));
+      })
+    );
+  }
+
   getIssuesByIssueNumbers(owner: string, repo: string, numbers: number[]): Observable<any[]> {
     return this.authService.getToken().pipe(
       switchMap(token => {
@@ -69,6 +106,70 @@ export class IssuesService {
         return this.http.get<any[]>(`${environment.apiUrl}/github/${owner}/${repo}/issues/numbers`, { params, headers });
       }),
       catchError(error => throwError(() => new Error('Failed to fetch issues')))
+    );
+  }
+
+  lockIssue(owner: string, repo: string, issueNumber: number): Observable<any> {
+    return this.authService.getToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          return throwError(() => new Error('User not authenticated'));
+        }
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        
+        // Step 1: Lock the issue
+        return this.http.put(
+          `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/lock`,
+          { lock_reason: 'spam' },
+          { headers }
+        ).pipe(
+          // Step 2: Close the issue
+          switchMap(() => this.closeIssue(owner, repo, issueNumber, headers)),
+          // Step 3: Ensure "spam" label exists and add it to the issue
+          switchMap(() => this.addSpamLabel(owner, repo, issueNumber, headers)),
+          map(() => ({
+            number: issueNumber,
+            state: 'closed',
+          }))
+        );
+      }),
+      catchError(error => {
+        return throwError(() => new Error('Failed to process issue'));
+      })
+    );
+  }
+
+  private closeIssue(owner: string, repo: string, issueNumber: number, headers: HttpHeaders): Observable<any> {
+    return this.http.patch(
+      `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}`,
+      { state: 'closed' },
+      { headers }
+    );
+  }
+
+  private addSpamLabel(owner: string, repo: string, issueNumber: number, headers: HttpHeaders): Observable<any> {
+    return this.ensureSpamLabelExists(owner, repo, headers).pipe(
+      switchMap(() => this.http.post(
+        `${environment.apiUrl}/github/${owner}/${repo}/issues/${issueNumber}/labels`,
+        { labels: ['spam'] },
+        { headers }
+      ))
+    );
+  }
+
+  private ensureSpamLabelExists(owner: string, repo: string, headers: HttpHeaders): Observable<any> {
+    return this.http.post(
+      `${environment.apiUrl}/github/${owner}/${repo}/labels`,
+      { name: 'spam', color: 'f5222d', description: 'Spam issue' },
+      { headers }
+    ).pipe(
+      catchError(error => {
+        if (error.status === 422) {
+          // Label already exists, we can ignore this error
+          return of(null);
+        }
+        return throwError(() => error);
+      })
     );
   }
 }

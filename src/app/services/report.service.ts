@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -30,5 +30,17 @@ export class ReportService {
         map(response => response.status === 204 ? { message: 'No report found to delete' } : response.body),
         catchError(error => { throw error; })
       );
+  }
+
+  updateReport(report: any): Observable<any> {
+    const updatedReport = {
+      ...report,
+      isopen: report.isopen
+    };
+    return this.http.put(`${environment.apiUrl}/reports/${report.reportid}`, updatedReport).pipe(
+      catchError(error => {
+        return throwError(() => new Error('Failed to update report'));
+      })
+    );
   }
 }
