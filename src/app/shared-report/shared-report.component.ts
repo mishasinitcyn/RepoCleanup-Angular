@@ -54,6 +54,7 @@ export class SharedReportComponent implements OnInit {
         description: "Protect your main branch from direct pushes", 
         icon: "safety", 
         functionCall: () => this.secureMainBranch(),
+        disabled: !this.isRepoOwner,
         loading: false
       },
       { 
@@ -61,7 +62,7 @@ export class SharedReportComponent implements OnInit {
         description: "Set up a rule to require 2 approvals for PRs", 
         icon: "team", 
         functionCall: () => this.requirePRApprovals(),
-        disabled: this.repoData?.repoMetadata?.private,
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner,
         loading: false
       },
       { 
@@ -69,6 +70,7 @@ export class SharedReportComponent implements OnInit {
         description: "Create templates for Issues and Pull Requests", 
         icon: "file-text", 
         functionCall: () => this.addTemplates(),
+        disabled: !this.isRepoOwner,
         loading: false
       },
     ];

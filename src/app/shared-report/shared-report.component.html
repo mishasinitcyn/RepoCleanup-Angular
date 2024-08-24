@@ -115,26 +115,22 @@
       <nz-alert nzType="info" nzMessage="This report has been closed" [nzDescription]="isRepoOwner ? 'You may add GitHub Actions below' : ''" nzShowIcon style="margin-bottom: 24px; margin-top: 24px">{{isRepoOwner}}</nz-alert>
     </ng-template>
     
-    <nz-card nzTitle="Recommended Actions" class="recommended-actions">
-      <p>Consider implementing these GitHub Actions to improve your repository's security and workflow:</p>
+    <nz-card nzTitle="Recommended Actions (Admin)" class="recommended-actions">
+      <!-- <p>Consider implementing these GitHub Actions to improve your repository's security and workflow:</p> -->
       <nz-list [nzDataSource]="recommendedActions" nzItemLayout="horizontal">
         <nz-list-item *ngFor="let action of recommendedActions" 
                       [style.cursor]="action.disabled || action.loading ? 'not-allowed' : 'pointer'"
                       (click)="!action.disabled && !action.loading && action.functionCall()"
                       [class.disabled-action]="action.disabled"
                       [class.loading-action]="action.loading">
-          <nz-list-item-meta
-            [nzAvatar]="avatarTemplate"
-            [nzTitle]="action.name"
-            [nzDescription]="action.description"
-          >
+          <nz-list-item-meta [nzAvatar]="avatarTemplate" [nzTitle]="action.name" [nzDescription]="action.description">
             <ng-template #avatarTemplate>
               <span nz-icon [nzType]="action.loading ? 'loading' : action.icon" nzTheme="outline"></span>
             </ng-template>
           </nz-list-item-meta>
-          <ng-container *ngIf="action.disabled">
-            <nz-tag nzColor="default">Not available for private repos</nz-tag>
-          </ng-container>
+          <!-- <ng-container *ngIf="action.disabled">
+            <nz-tag nzColor="default">Not available</nz-tag>
+          </ng-container> -->
           <ng-container *ngIf="action.loading">
             <nz-tag nzColor="processing">Processing...</nz-tag>
           </ng-container>

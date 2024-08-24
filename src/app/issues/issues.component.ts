@@ -70,7 +70,7 @@ export class IssuesComponent implements OnInit {
   private handleOpenReportResponse(response: { exists: boolean, report: any }): Observable<any> {
     if (response.exists && response.report) {
       this.report = response.report;
-      this.message.success("Existing report imported");
+      // this.message.success("Existing report imported");
       return of(this.report);
     }
     return of(null);

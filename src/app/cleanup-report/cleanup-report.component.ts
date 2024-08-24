@@ -6,7 +6,8 @@ import { AuthService } from '../services/auth.service';
 import { switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { colorMapping, FlaggedIssue } from '../core/interface';
+import { colorMapping } from '../core/interface';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -25,7 +26,7 @@ export class CleanupReportComponent implements OnInit {
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard) {}
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard, private router: Router) {}
 
   ngOnInit(): void {
     this.updateClosedIssues();
@@ -113,6 +114,10 @@ export class CleanupReportComponent implements OnInit {
     } else {
       this.message.error('Failed to copy URL to clipboard');
     }
+  }
+
+  viewReport(reportID: string): void {
+    this.router.navigate(['/report', reportID]);
   }
   
   private showDeleteConfirmation(userId: string): void {

@@ -10,7 +10,9 @@
   <nz-page-header-extra>
     <nz-avatar *ngIf="user$ | async as user; else githubIcon" nz-page-header-avatar nzSize="large" [nzSrc]="user.avatar_url"></nz-avatar>
     <ng-template #githubIcon>
-      <nz-avatar nz-page-header-avatar nzIcon="github" nzSize="large" [nzSrc]="'assets/github.svg'" (click)="login()"></nz-avatar>
+      <div nz-tooltip nzTooltipTitle="Log in with Github" nzTooltipPlacement="bottom">
+        <nz-avatar nz-page-header-avatar nzIcon="github" nzSize="large" [nzSrc]="'assets/github.svg'" (click)="login()" style="cursor: pointer;"></nz-avatar>
+      </div>
     </ng-template>
   </nz-page-header-extra>
 
