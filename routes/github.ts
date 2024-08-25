@@ -84,7 +84,7 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       });
     }
     
-    const perPage = token ? 30 : 10;
+    const perPage = token ? 10 : 5;
     
     const { data: issues, headers } = await octokit.rest.issues.listForRepo({
       owner,
@@ -117,21 +117,6 @@ router.get('/:owner/:repo/issues', async (req, res) => {
     return res.status(error.status || 500).json({ error: 'Failed to fetch issues' });
   }
 });
-
-// Helper function to parse the Link header
-function parseLinkHeader(header: string | undefined): Record<string, string> {
-  if (!header) return {};
-  const links = header.split(',');
-  const parsed: Record<string, string> = {};
-  links.forEach(link => {
-    const section = link.split(';');
-    if (section.length !== 2) return;
-    const url = section[0].replace(/<(.*)>/, '$1').trim();
-    const name = section[1].replace(/rel="(.*)"/, '$1').trim();
-    parsed[name] = url;
-  });
-  return parsed;
-}
 
 router.get('/:owner/:repo/issues/numbers', async (req, res) => {
   const { owner, repo } = req.params;

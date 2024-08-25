@@ -1,14 +1,14 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { IssuesService } from '../services/issues.service';
 import { ReportService } from '../services/report.service';
-import { colorMapping, FlaggedIssue, IssueLabel, SpamLabel } from '../core/interface';
+import { colorMapping, FlaggedIssue, IssueLabel, RepoData, SpamLabel } from '../core/interface';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { AuthService } from '../services/auth.service';
-import { Observable, of, forkJoin } from 'rxjs';
-import { switchMap, tap, map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-issues',
@@ -22,6 +22,7 @@ export class IssuesComponent implements OnInit {
   loadingClassification = false;
   isLoggedIn = false;
   selectedTabIndex = 0;
+  currentPage = 1;
 
   hasSpamLabel = (issue: any): boolean => issue.labels.some((label: any) => label.name === 'spam');
   onTabChange = (event: any): void => this.selectedTabIndex = event.index;
@@ -38,8 +39,7 @@ export class IssuesComponent implements OnInit {
     this.issuesService.getRepoData().pipe(
       tap(this.updateRepoData.bind(this)),
       switchMap(this.fetchOpenReport.bind(this)),
-      switchMap(this.handleOpenReportResponse.bind(this)),
-      switchMap(this.fetchMissingIssues.bind(this))
+      switchMap(this.handleOpenReportResponse.bind(this))
     ).subscribe(
       () => {
         this.applyExistingReportLabels();
@@ -49,7 +49,7 @@ export class IssuesComponent implements OnInit {
     );
   }
   
-  private updateRepoData(repoData: any): void {
+  private updateRepoData(repoData: RepoData | null): void {
     this.repoData = repoData;
   }
   
@@ -102,16 +102,47 @@ export class IssuesComponent implements OnInit {
     );
   }
 
+  onPageChange(page: number): void {
+    if (this.repoData) {
+      const { repoMetadata } = this.repoData;
+      this.issuesService.fetchNextPage(repoMetadata.owner.login, repoMetadata.name, page)
+        .subscribe(
+          newRepoData => {
+            this.repoData = newRepoData;
+            this.currentPage = page;
+            this.applyExistingReportLabels();
+            this.sortIssues();
+          },
+          error => this.message.error('Error fetching page: ' + error.message)
+        );
+    }
+  }
+
   private applyExistingReportLabels(): void {
     if (!this.report || !this.report.flaggedissues) return;
 
+    const allCachedIssues = this.issuesService.getAllCachedIssues();
     this.report.flaggedissues.forEach((flaggedIssue: FlaggedIssue) => {
-      const issue = this.repoData.issues.find((issue: any) => issue.number === flaggedIssue.number);
+      const issue = allCachedIssues.find((issue: any) => issue.number === flaggedIssue.number);
       if (issue) {
         this.addSpamLabel(issue);
         issue.state = flaggedIssue.state;
       }
     });
+  }
+
+  private sortIssues(): void {
+    if (this.repoData) {
+      const allCachedIssues = this.issuesService.getAllCachedIssues();
+      allCachedIssues.sort((a: any, b: any) => {
+        const aIsSpam = a.labels.some((label: any) => label.name === 'spam');
+        const bIsSpam = b.labels.some((label: any) => label.name === 'spam');
+        if (aIsSpam === bIsSpam) {
+          return a.state === 'closed' ? 1 : -1;
+        }
+        return aIsSpam ? -1 : 1; // Spam issues first
+      });
+    }
   }
   
   checkLoginStatus(): void {
@@ -157,17 +188,6 @@ export class IssuesComponent implements OnInit {
           }
         }
       }
-    });
-  }
-
-  sortIssues(): void {
-    this.repoData.issues.sort((a: any, b: any) => {
-      const aIsSpam = a.labels.some((label: any) => label.name === 'spam');
-      const bIsSpam = b.labels.some((label: any) => label.name === 'spam');
-      if (aIsSpam === bIsSpam) {
-        return a.state === 'closed' ? 1 : -1; // Open issues first
-      }
-      return aIsSpam ? -1 : 1; // Spam issues first
     });
   }
 
