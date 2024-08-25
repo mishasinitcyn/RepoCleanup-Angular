@@ -25,7 +25,6 @@ export class LandingPageComponent {
   fetchRepoData() {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      // this.fetchRepoData_mock();
       this.message.info("Please enter valid Github repository URL")
       return;
     }
@@ -33,13 +32,7 @@ export class LandingPageComponent {
     const [owner, repo] = repoPath.split('/');
     this.issuesService.fetchRepoData(owner, repo).subscribe(
       repoData => this.router.navigate(['/issues']),
-      error => alert('Error fetching repository data')
-    );
-  }
-
-  fetchRepoData_mock(): void {
-    this.issuesService.fetchRepoData('mock', 'mock').subscribe(
-      () => this.router.navigate(['/issues']),
+      error => this.message.error('Error fetching repository data')
     );
   }
 

@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { colorMapping } from '../core/interface';
 import { Router } from '@angular/router';
+import { IssuesService } from '../services/issues.service';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -21,12 +22,16 @@ export class CleanupReportComponent implements OnInit {
   expandedIssueNumbers: number[] = [];
   closedIssues: any[] = [];
 
-  get spamIssues(): any[] { return this.repoData ? this.repoData.issues.filter((issue: any) => this.hasSpamLabel(issue) && issue.state !== 'closed') : []; }
-  get totalIssues(): number { return this.repoData ? this.repoData.issues.length : 0; }
+  get allCachedIssues(): any[] { return this.issuesService.getAllCachedIssues(); }
+  get spamIssues(): any[] { return this.allCachedIssues.filter((issue: any) => this.hasSpamLabel(issue) && issue.state !== 'closed'); }
+  get totalIssues(): number { return this.repoData ? this.repoData.pagination.totalIssues : 0; }
   get spamCount(): number { return this.spamIssues.length; }
   get spamRatio(): number { return (this.spamCount / this.totalIssues) * 100; }
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard, private router: Router) {}
+  hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
+  removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
+
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard, private router: Router, private issuesService: IssuesService) {}
 
   ngOnInit(): void {
     this.updateClosedIssues();
@@ -34,15 +39,12 @@ export class CleanupReportComponent implements OnInit {
 
   updateClosedIssues(): void {
     if (this.repoData && this.report) {
-      this.closedIssues = this.repoData.issues.filter((issue: any) => {
+      this.closedIssues = this.allCachedIssues.filter((issue: any) => {
         const isFlagged = this.report.flaggedissues.some((flaggedIssue: any) => flaggedIssue.number === issue.number);
         return isFlagged && issue.state === 'closed';
       });
     }
   }
-  
-  hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
-  removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
   removeClosedIssue(issue: any): void {
     if (!this.report || !this.report.flaggedissues) {
@@ -147,7 +149,6 @@ export class CleanupReportComponent implements OnInit {
       error => this.message.error('Error deleting report')
     );
   }
-
 
   getLabelColor(label: string): string {
     return colorMapping[label.toLowerCase()] || 'default';

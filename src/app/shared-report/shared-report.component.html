@@ -33,7 +33,7 @@
                   <td>#{{ issue.number }}</td>
                   <td>{{ issue.user.login }}</td>
                   <td>
-                    <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.name === 'spam' ? 'red' : 'white'">{{ label.name }}</nz-tag>
+                    <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.name === 'spam' ? 'red' : 'black'">{{ label.name }}</nz-tag>
                   </td>
                   <td>
                     <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Unflag issue" (click)="unflagIssue(issue)" [disabled]="issue.status=='closed' || !hasEditPermission()">
@@ -128,9 +128,9 @@
               <span nz-icon [nzType]="action.loading ? 'loading' : action.icon" nzTheme="outline"></span>
             </ng-template>
           </nz-list-item-meta>
-          <!-- <ng-container *ngIf="action.disabled">
+          <ng-container *ngIf="action.disabled">
             <nz-tag nzColor="default">Not available</nz-tag>
-          </ng-container> -->
+          </ng-container>
           <ng-container *ngIf="action.loading">
             <nz-tag nzColor="processing">Processing...</nz-tag>
           </ng-container>

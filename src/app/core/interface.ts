@@ -20,8 +20,20 @@ export interface FlaggedIssue {
 }
   
 export interface RepoData {
-    issues: any; 
-    repoMetadata: any;
+  repoMetadata: any;
+  issues: any[];
+  pagination: Pagination;
+}
+
+export interface Pagination {
+  currentPage: number;
+  perPage: number;
+  totalPages: number;
+  totalIssues: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: number | null;
+  prevPage: number | null;
 }
 
 export const colorMapping: { [key: string]: string } = {

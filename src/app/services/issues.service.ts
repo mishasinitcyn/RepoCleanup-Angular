@@ -5,13 +5,15 @@ import { AuthService } from './auth.service';
 import { switchMap, tap, map, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { RepoData } from '../core/interface';
-import { mockIssues } from '../assets/mockIssues';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IssuesService {
   private repoDataSubject = new BehaviorSubject<RepoData | null>(null);
+  private cachedPages: { [key: number]: any[] } = {};
+  private currentOwner: string | null = null;
+  private currentRepo: string | null = null;
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
@@ -39,26 +41,70 @@ export class IssuesService {
     );
   }
 
-  fetchRepoData(owner: string, repo: string): Observable<RepoData> {
-    if (owner === 'mock' && repo === 'mock') {
-      return of(mockIssues as RepoData).pipe(
-        tap(repoData => this.repoDataSubject.next(repoData))
-      );
+  fetchRepoData(owner: string, repo: string, page: number = 1): Observable<RepoData> {
+    // Reset cache if we're fetching a new repo
+    if (owner !== this.currentOwner || repo !== this.currentRepo) {
+      this.cachedPages = {};
+      this.currentOwner = owner;
+      this.currentRepo = repo;
     }
-  
+
+    // Check if we have this page cached
+    if (this.cachedPages[page]) {
+      return of(this.createRepoDataFromCache(page));
+    }
+
     return this.authService.getToken().pipe(
       switchMap(token => {
         const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
         return this.getRepoMetadata(owner, repo).pipe(
           switchMap(repoMetadata => 
-            this.http.get<any[]>(`${environment.apiUrl}/github/${owner}/${repo}/issues`, { headers }).pipe(
-              map(issues => ({ repoMetadata, issues } as RepoData))
+            this.http.get<any>(`${environment.apiUrl}/github/${owner}/${repo}/issues`, { 
+              headers,
+              params: { 
+                open_issues_count: repoMetadata.open_issues_count.toString(),
+                page: page.toString()
+              }
+            }).pipe(
+              tap(response => {
+                // Cache the fetched page
+                this.cachedPages[page] = response.issues;
+              }),
+              map(response => ({ 
+                repoMetadata, 
+                issues: response.issues,
+                pagination: response.pagination
+              } as RepoData))
             )
           ),
           tap(repoData => this.repoDataSubject.next(repoData))
         );
       })
     );
+  }
+
+  fetchNextPage(owner: string, repo: string, nextPage: number): Observable<RepoData> {
+    return this.fetchRepoData(owner, repo, nextPage);
+  }
+
+  private createRepoDataFromCache(page: number): RepoData {
+    const currentRepoData = this.repoDataSubject.getValue();
+    if (!currentRepoData) {
+      throw new Error('No repo data available');
+    }
+
+    return {
+      ...currentRepoData,
+      issues: this.cachedPages[page],
+      pagination: {
+        ...currentRepoData.pagination,
+        currentPage: page
+      }
+    };
+  }
+
+  getAllCachedIssues(): any[] {
+    return Object.values(this.cachedPages).flat();
   }
 
   blockUser(org: string, username: string): Observable<any> {
