@@ -84,7 +84,7 @@ router.get('/:owner/:repo/issues', async (req, res) => {
       });
     }
     
-    const perPage = token ? 10 : 5;
+    const perPage = token ? 5 : 5;
     
     const { data: issues, headers } = await octokit.rest.issues.listForRepo({
       owner,
