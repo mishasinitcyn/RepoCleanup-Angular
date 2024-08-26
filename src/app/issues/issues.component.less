@@ -15,26 +15,17 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     cursor: pointer;
 
-    &:hover {
-      // background: linear-gradient(to top, #4f53a644, #2596ff00);
-      // box-shadow: 0 6px 20px rgba(255, 0, 85, 0.5);
-    }
-
     &.spam-issue {
       border: 1px solid #cc4c6c;
-      // background-color: #ce394d;
-      // background: linear-gradient(#cc4c6c, #ce394d);
       cursor: pointer;
 
       &:hover {
-        // background: radial-gradient(#e66485, #ce394d);
         box-shadow: 0 6px 20px rgba(255, 0, 85, 0.5);
       }
     }
   }
 
   .nz-card-meta-title {
-    // color: black;
     font-size: 2rem;
   }
 
@@ -42,42 +33,30 @@
     color: #333;
   }
 
-  .issues-page {
-    margin: 0;
-    margin-top: 50px;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    display: block;
-    padding: 20px;
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: -9;
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
-      background-size: 14px 24px;
-      mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
-    }
-
-    .classification-summary-button {
-      margin-top: 20px;
-      text-align: center;
-    }
-  }
-
   nz-tag {
     margin-right: 8px;
-    // background-color: rgba(0, 0, 0, 0.1);
   }
 
   .pagination-container {
     display: flex;
     justify-content: center;
-    margin: 20px 0;
+    margin-bottom: 20px;
+  }
+
+  .markdown-content {
+    overflow-x: auto;
+    max-width: 100%;
+
+    ::ng-deep {
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
   }
 }

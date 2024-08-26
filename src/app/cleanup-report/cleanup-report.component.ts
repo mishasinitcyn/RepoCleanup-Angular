@@ -9,6 +9,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 import { colorMapping } from '../core/interface';
 import { Router } from '@angular/router';
 import { IssuesService } from '../services/issues.service';
+import { DebounceService } from '../services/debounce.service';
 
 @Component({
   selector: 'app-cleanup-report',
@@ -31,7 +32,8 @@ export class CleanupReportComponent implements OnInit {
   hasSpamLabel(issue: any): boolean { return issue.labels.some((label: any) => label.name === 'spam'); }
   removeSpamLabel = (issue: any): void => this.removeSpamLabelEvent.emit(issue);
 
-  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, private clipboard: Clipboard, private router: Router, private issuesService: IssuesService) {}
+  constructor(private reportService: ReportService, private message: NzMessageService, private modal: NzModalService, private authService: AuthService, 
+              private clipboard: Clipboard, private router: Router, private issuesService: IssuesService, private debounceService: DebounceService) {}
 
   ngOnInit(): void {
     this.updateClosedIssues();
@@ -68,28 +70,30 @@ export class CleanupReportComponent implements OnInit {
       return;
     }
 
-    this.authService.getUser().pipe(
-      switchMap(user => {
-        if (!user) {
-          this.message.info('Please log in to save report');
-          return of(null);
-        }
+    this.debounceService.debounce(() => {
+      this.authService.getUser().pipe(
+        switchMap(user => {
+          if (!user) {
+            this.message.info('Please log in to save report');
+            return of(null);
+          }
 
-        const flaggedIssues = [...this.spamIssues, ...this.closedIssues].map((issue:any) => ({
-          number: issue.number,
-          username: issue.user.login,
-          label: 'spam',
-          state: issue.state
-        }));
+          const flaggedIssues = [...this.spamIssues, ...this.closedIssues].map((issue:any) => ({
+            number: issue.number,
+            username: issue.user.login,
+            label: 'spam',
+            state: issue.state
+          }));
 
-        if (flaggedIssues.length === 0) {
-          this.showDeleteConfirmation(user.id);
-          return of(null);
-        } else {
-          return this.saveReportData(flaggedIssues, user.id);
-        }
-      })
-    ).subscribe();
+          if (flaggedIssues.length === 0) {
+            this.showDeleteConfirmation(user.id);
+            return of(null);
+          } else {
+            return this.saveReportData(flaggedIssues, user.id);
+          }
+        })
+      ).subscribe();
+    });
   }
   
   private saveReportData(flaggedIssues: any[], userId: string): any {
@@ -100,13 +104,15 @@ export class CleanupReportComponent implements OnInit {
       flaggedissues: JSON.stringify(flaggedIssues)
     };
   
-    this.reportService.postReport(report).subscribe(
-      response => {
-        this.report = {reportid: response.reportid}
-        this.message.success('Report saved successfully');
-      },
-      error => this.message.error('Error saving report')
-    );
+    this.debounceService.debounce(() => {
+      this.reportService.postReport(report).subscribe(
+        response => {
+          this.report = {reportid: response.reportid}
+          this.message.success('Report saved successfully');
+        },
+        error => this.message.error('Error saving report')
+      );
+    });
   }
 
   copyReportUrlToClipboard(reportID: string): void {
@@ -138,16 +144,18 @@ export class CleanupReportComponent implements OnInit {
   }
   
   private deleteReport(userId: string): void {
-    this.reportService.deleteReport(userId, this.repoData.repoMetadata.id).subscribe(
-      response => {
-        if (response.message === 'No report found to delete') {
-          this.message.info('No existing report found to delete');
-        } else {
-          this.message.success('Report deleted successfully');
-        }
-      },
-      error => this.message.error('Error deleting report')
-    );
+    this.debounceService.debounce(() => {
+      this.reportService.deleteReport(userId, this.repoData.repoMetadata.id).subscribe(
+        response => {
+          if (response.message === 'No report found to delete') {
+            this.message.info('No existing report found to delete');
+          } else {
+            this.message.success('Report deleted successfully');
+          }
+        },
+        error => this.message.error('Error deleting report')
+      );
+    });
   }
 
   getLabelColor(label: string): string {

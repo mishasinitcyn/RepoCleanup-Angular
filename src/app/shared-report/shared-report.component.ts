@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { combineLatest, Observable, of, throwError } from 'rxjs';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ActionsService } from '../services/actions.service';
+import { DebounceService } from '../services/debounce.service';
 
 interface RecommendedAction {
   name: string;
@@ -36,7 +37,7 @@ export class SharedReportComponent implements OnInit {
   recommendedActions: RecommendedAction[] = [];
 
   constructor(private route: ActivatedRoute, private reportService: ReportService, private issuesService: IssuesService, private authService: AuthService, 
-              private message: NzMessageService, private modal: NzModalService, private actionsService: ActionsService) {
+              private message: NzMessageService, private modal: NzModalService, private actionsService: ActionsService, private debounceService: DebounceService) {
     this.reportID = this.route.snapshot.paramMap.get('reportID') || '';
   }
 
@@ -93,7 +94,7 @@ export class SharedReportComponent implements OnInit {
         this.initializeRecommendedActions(); // Initialize actions after setting repoData
       })
     ).subscribe({
-      error: (error) => this.message.error('An error occurred while fetching the report data.')
+      // error: (error) => this.message.error('An error occurred while fetching the report data.')
     });
   }
 
@@ -126,7 +127,7 @@ export class SharedReportComponent implements OnInit {
       }),
       catchError(error => {
         if (error.message === 'No report found') {
-          this.message.error('No report found with the given ID.');
+          // this.message.error('No report found with the given ID.');
         } else {
           this.message.error('An error occurred while fetching the report data.');
         }
@@ -159,71 +160,71 @@ export class SharedReportComponent implements OnInit {
       return;
     }
 
-    const index = this.report.flaggedissues.findIndex((i: any) => i.number === issue.number);
-    
-    if (index !== -1) {
-      this.report.flaggedissues.splice(index, 1);
-      this.repoData.issues.splice(index, 1);
+    this.debounceService.debounce(() => {
+      const index = this.report.flaggedissues.findIndex((i: any) => i.number === issue.number);
+      
+      if (index !== -1) {
+        this.report.flaggedissues.splice(index, 1);
+        this.repoData.issues.splice(index, 1);
 
-      this.updateReport().subscribe(
-        () => {
-          this.message.success(`Unflagged issue #${issue.number}`);
-        },
-        (error) => {
-          this.message.error(`Failed to unflag issue #${issue.number}`);
-          // Revert the changes if update fails
-          this.report.flaggedissues.splice(index, 0, issue);
-          this.repoData.issues.splice(index, 0, issue);
-        }
-      );
-    } else {
-      this.message.error(`Issue #${issue.number} not found in the report`);
-    }
+        this.updateReport().subscribe(
+          () => {
+            this.message.success(`Unflagged issue #${issue.number}`);
+          },
+          (error) => {
+            this.message.error(`Failed to unflag issue #${issue.number}`);
+            // Revert the changes if update fails
+            this.report.flaggedissues.splice(index, 0, issue);
+            this.repoData.issues.splice(index, 0, issue);
+          }
+        );
+      } else {
+        this.message.error(`Issue #${issue.number} not found in the report`);
+      }
+    });
   }
 
   closeIssue(issue: any): void {
-    if (!this.hasEditPermission()) {
-      this.message.error('You do not have permission to edit this report.');
+    if (!this.hasEditPermission() || !this.isRepoOwner) {
+      this.message.error('You do not have permission to close this issue.');
       return;
     }
-    if (!this.isRepoOwner) {
-      this.message.error('Only repository owners can close issues as spam.');
-      return;
-    }
-  
-    const owner = this.repoData.repoMetadata.owner.login;
-    const repo = this.repoData.repoMetadata.name;
-  
-    this.issuesService.lockIssue(owner, repo, issue.number).pipe(
-      catchError(error => {
-        this.message.error(`Failed to process issue #${issue.number}`);
-        return of(null);
-      })
-    ).subscribe(response => {
-      if (response) {
-        this.message.success(`Issue #${issue.number} locked, closed and labeled as spam`);
-        
-        // Update the issue in report.flaggedIssues
-        const flaggedIssue = this.report.flaggedissues.find((i: any) => i.number === issue.number);
-        if (flaggedIssue) {
-          flaggedIssue.state = 'closed';
-          flaggedIssue.labels = flaggedIssue.labels || [];
-          if (!flaggedIssue.labels.includes('spam')) {
-            flaggedIssue.labels.push('spam');
+
+    this.debounceService.debounce(() => {
+      const owner = this.repoData.repoMetadata.owner.login;
+      const repo = this.repoData.repoMetadata.name;
+
+      this.issuesService.lockIssue(owner, repo, issue.number).pipe(
+        catchError(error => {
+          this.message.error(`Failed to process issue #${issue.number}`);
+          return of(null);
+        })
+      ).subscribe(response => {
+        if (response) {
+          this.message.success(`Issue #${issue.number} locked, closed and labeled as spam`);
+          
+          // Update the issue in report.flaggedIssues
+          const flaggedIssue = this.report.flaggedissues.find((i: any) => i.number === issue.number);
+          if (flaggedIssue) {
+            flaggedIssue.state = 'closed';
+            flaggedIssue.labels = flaggedIssue.labels || [];
+            if (!flaggedIssue.labels.includes('spam')) {
+              flaggedIssue.labels.push('spam');
+            }
           }
+
+          // Move the issue to closedIssues
+          const index = this.repoData.issues.findIndex((i: any) => i.number === issue.number);
+          if (index !== -1) {
+            const closedIssue = this.repoData.issues.splice(index, 1)[0];
+            closedIssue.state = 'closed';
+            this.closedIssues.push(closedIssue);
+          }
+
+          // Update the report
+          this.updateReport();
         }
-  
-        // Move the issue to closedIssues
-        const index = this.repoData.issues.findIndex((i: any) => i.number === issue.number);
-        if (index !== -1) {
-          const closedIssue = this.repoData.issues.splice(index, 1)[0];
-          closedIssue.state = 'closed';
-          this.closedIssues.push(closedIssue);
-        }
-  
-        // Update the report
-        this.updateReport();
-      }
+      });
     });
   }
 
@@ -233,23 +234,25 @@ export class SharedReportComponent implements OnInit {
       return;
     }
 
-    this.report.isopen = false;
+    this.debounceService.debounce(() => {
+      this.report.isopen = false;
 
-    this.reportService.updateReport(this.report).pipe(
-      catchError(error => {
-        this.message.error('Failed to close the report. Please try again.');
-        return throwError(() => new Error('Failed to close report'));
-      })
-    ).subscribe(
-      (response) => {
-        if (response && response.report) {
-          this.report = response.report;
-          this.message.success('Report closed successfully');
-        } else {
-          this.message.warning('Report closed, but the response was unexpected');
+      this.reportService.updateReport(this.report).pipe(
+        catchError(error => {
+          this.message.error('Failed to close the report. Please try again.');
+          return throwError(() => new Error('Failed to close report'));
+        })
+      ).subscribe(
+        (response) => {
+          if (response && response.report) {
+            this.report = response.report;
+            this.message.success('Report closed successfully');
+          } else {
+            this.message.warning('Report closed, but the response was unexpected');
+          }
         }
-      }
-    );
+      );
+    });
   }
 
   updateReport(): Observable<any> {
@@ -308,20 +311,22 @@ export class SharedReportComponent implements OnInit {
       return;
     }
 
-    const owner = this.repoData.repoMetadata.owner.login;
-    const username = issue.user.login;
+    this.debounceService.debounce(() => {
+      const owner = this.repoData.repoMetadata.owner.login;
+      const username = issue.user.login;
 
-    this.issuesService.blockUser(owner, username).pipe(
-      catchError(error => {
-        this.message.error(`Failed to block user ${username}`);
-        return throwError(() => new Error('Failed to block user'));
-      })
-    ).subscribe(
-      () => {
-        this.message.success(`Blocked user ${username}`);
-        this.blockedUsers.add(username);
-      }
-    );
+      this.issuesService.blockUser(owner, username).pipe(
+        catchError(error => {
+          this.message.error(`Failed to block user ${username}`);
+          return throwError(() => new Error('Failed to block user'));
+        })
+      ).subscribe(
+        () => {
+          this.message.success(`Blocked user ${username}`);
+          this.blockedUsers.add(username);
+        }
+      );
+    });
   }
 
   unblockUser(issue: any): void {
@@ -330,20 +335,22 @@ export class SharedReportComponent implements OnInit {
       return;
     }
 
-    const owner = this.repoData.repoMetadata.owner.login;
-    const username = issue.user.login;
+    this.debounceService.debounce(() => {
+      const owner = this.repoData.repoMetadata.owner.login;
+      const username = issue.user.login;
 
-    this.issuesService.unblockUser(owner, username).pipe(
-      catchError(error => {
-        this.message.error(`Failed to unblock user ${username}`);
-        return throwError(() => new Error('Failed to unblock user'));
-      })
-    ).subscribe(
-      () => {
-        this.message.success(`Unblocked user ${username}`);
-        this.blockedUsers.delete(username);
-      }
-    );
+      this.issuesService.unblockUser(owner, username).pipe(
+        catchError(error => {
+          this.message.error(`Failed to unblock user ${username}`);
+          return throwError(() => new Error('Failed to unblock user'));
+        })
+      ).subscribe(
+        () => {
+          this.message.success(`Unblocked user ${username}`);
+          this.blockedUsers.delete(username);
+        }
+      );
+    });
   }
 
   isUserBlocked(username: string): boolean {
@@ -355,30 +362,32 @@ export class SharedReportComponent implements OnInit {
       this.message.error('Only repository owners can perform this action.');
       return;
     }
-  
-    const action = this.recommendedActions.find(a => a.name === "Secure Main Branch");
-    if (action) action.loading = true;
-  
-    const owner = this.repoData.repoMetadata.owner.login;
-    const repo = this.repoData.repoMetadata.name;
-  
-    this.actionsService.secureMainBranch(owner, repo).pipe(
-      catchError(error => {
-        if (action) action.loading = false;
-        if (error.message === 'No authentication token available') {
-          this.message.error('You need to be authenticated to perform this action. Please log in.');
-          this.authService.login();
-        } else {
-          this.message.error('Failed to secure main branch. Please try again.');
+
+    this.debounceService.debounce(() => {
+      const action = this.recommendedActions.find(a => a.name === "Secure Main Branch");
+      if (action) action.loading = true;
+
+      const owner = this.repoData.repoMetadata.owner.login;
+      const repo = this.repoData.repoMetadata.name;
+
+      this.actionsService.secureMainBranch(owner, repo).pipe(
+        catchError(error => {
+          if (action) action.loading = false;
+          if (error.message === 'No authentication token available') {
+            this.message.error('You need to be authenticated to perform this action. Please log in.');
+            this.authService.login();
+          } else {
+            this.message.error('Failed to secure main branch. Please try again.');
+          }
+          return throwError(() => error);
+        })
+      ).subscribe(
+        () => {
+          if (action) action.loading = false;
+          this.message.success('Main branch secured successfully');
         }
-        return throwError(() => error);
-      })
-    ).subscribe(
-      () => {
-        if (action) action.loading = false;
-        this.message.success('Main branch secured successfully');
-      }
-    );
+      );
+    });
   }
   
   requirePRApprovals(): void {
@@ -386,30 +395,32 @@ export class SharedReportComponent implements OnInit {
       this.message.error('Only repository owners can perform this action.');
       return;
     }
-  
-    const action = this.recommendedActions.find(a => a.name === "Require PR Approvals");
-    if (action) action.loading = true;
-  
-    const owner = this.repoData.repoMetadata.owner.login;
-    const repo = this.repoData.repoMetadata.name;
-  
-    this.actionsService.requirePRApprovals(owner, repo).pipe(
-      catchError(error => {
-        if (error.message === 'No authentication token available') {
-          this.message.error('You need to be authenticated to perform this action. Please log in.');
-          this.authService.login();
-        } else {
+
+    this.debounceService.debounce(() => {
+      const action = this.recommendedActions.find(a => a.name === "Require PR Approvals");
+      if (action) action.loading = true;
+
+      const owner = this.repoData.repoMetadata.owner.login;
+      const repo = this.repoData.repoMetadata.name;
+
+      this.actionsService.requirePRApprovals(owner, repo).pipe(
+        catchError(error => {
+          if (error.message === 'No authentication token available') {
+            this.message.error('You need to be authenticated to perform this action. Please log in.');
+            this.authService.login();
+          } else {
+            if (action) action.loading = false;
+            this.message.error('Failed to set PR approval rule. Please try again.');
+          }
+          return throwError(() => error);
+        }),
+      ).subscribe(
+        () => {
           if (action) action.loading = false;
-          this.message.error('Failed to set PR approval rule. Please try again.');
+          this.message.success('PR approval rule set successfully');
         }
-        return throwError(() => error);
-      }),
-    ).subscribe(
-      () => {
-        if (action) action.loading = false;
-        this.message.success('PR approval rule set successfully');
-      }
-    );
+      );
+    });
   }
   
   addTemplates(): void {
@@ -417,29 +428,31 @@ export class SharedReportComponent implements OnInit {
       this.message.error('Only repository owners can perform this action.');
       return;
     }
-  
-    const action = this.recommendedActions.find(a => a.name === "Add Templates");
-    if (action) action.loading = true;
-  
-    const owner = this.repoData.repoMetadata.owner.login;
-    const repo = this.repoData.repoMetadata.name;
-  
-    this.actionsService.addTemplates(owner, repo).pipe(
-      catchError(error => {
-        if (action) action.loading = false;
-        if (error.message === 'No authentication token available') {
-          this.message.error('You need to be authenticated to perform this action. Please log in.');
-          this.authService.login();
-        } else {
-          this.message.info("Couldn't add templates. Please .github folder for existing templates");
+
+    this.debounceService.debounce(() => {
+      const action = this.recommendedActions.find(a => a.name === "Add Templates");
+      if (action) action.loading = true;
+
+      const owner = this.repoData.repoMetadata.owner.login;
+      const repo = this.repoData.repoMetadata.name;
+
+      this.actionsService.addTemplates(owner, repo).pipe(
+        catchError(error => {
+          if (action) action.loading = false;
+          if (error.message === 'No authentication token available') {
+            this.message.error('You need to be authenticated to perform this action. Please log in.');
+            this.authService.login();
+          } else {
+            this.message.info("Couldn't add templates. Please check .github folder for existing templates");
+          }
+          return throwError(() => error);
+        })
+      ).subscribe(
+        () => {
+          if (action) action.loading = false;
+          this.message.success('Templates added successfully');
         }
-        return throwError(() => error);
-      })
-    ).subscribe(
-      () => {
-        if (action) action.loading = false;
-        this.message.success('Templates added successfully');
-      }
-    );
+      );
+    });
   }
 }

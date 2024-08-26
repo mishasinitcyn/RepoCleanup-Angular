@@ -6,6 +6,7 @@ import { IssuesService } from '../services/issues.service';
 import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { DebounceService } from '../services/debounce.service';
 
 @Component({
   selector: 'app-landing-page',
@@ -19,10 +20,10 @@ export class LandingPageComponent {
 
   login = () => this.authService.login();
   logout = () => this.authService.logout();
-  fetchRepoData = () => this.processRepoUrl('/issues');
-  addRules = () => this.processRepoUrl('/rules', -1);
+  fetchRepoData = () => this.debounceService.debounce(() => this.processRepoUrl('/issues'));
+  addRules = () => this.debounceService.debounce(() => this.processRepoUrl('/rules', -1));
 
-  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService) {
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService, private debounceService: DebounceService) {
     this.user$ = this.authService.getUser();
   }
 
@@ -36,7 +37,10 @@ export class LandingPageComponent {
     const [owner, repo] = repoPath.split('/');
     this.issuesService.fetchRepoData(owner, repo, page).subscribe(
       repoData => this.router.navigate([navigateTo]),
-      error => this.message.error('Error fetching repository data')
+      error => {
+        if (error.status == 404) this.message.info('Please log in to fetch private repository')
+        else this.message.error('Error fetching repository data')
+      }
     );
   }
 
