@@ -58,19 +58,19 @@ export class SharedReportComponent implements OnInit {
         loading: false
       },
       { 
-        name: "Require PR Approvals", 
-        description: "Set up a rule to require 2 approvals for PRs", 
-        icon: "team", 
-        functionCall: () => this.requirePRApprovals(),
-        disabled: true,//this.repoData?.repoMetadata?.private || !this.isRepoOwner,
-        loading: false
-      },
-      { 
         name: "Add Templates", 
         description: "Create templates for Issues and Pull Requests", 
         icon: "file-text", 
         functionCall: () => this.addTemplates(),
         disabled: !this.isRepoOwner,
+        loading: false
+      },
+      { 
+        name: "Require PR Approvals", 
+        description: "Set up a rule to require 2 approvals for PRs", 
+        icon: "team", 
+        functionCall: () => this.requirePRApprovals(),
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner || this.repoData.repoMetadata.owner.type != 'Organization',
         loading: false
       },
     ];
@@ -293,6 +293,15 @@ export class SharedReportComponent implements OnInit {
     });
   }
 
+  expandIssue(issue: any): void {
+    const index = this.expandedIssueNumbers.indexOf(issue.number);
+    if (index === -1) {
+      this.expandedIssueNumbers.push(issue.number);
+    } else {
+      this.expandedIssueNumbers.splice(index, 1);
+    }
+  }
+  
   blockUser(issue: any): void {
     if (!this.isRepoOwner) {
       this.message.error('Only repository owners can block users.');
@@ -339,15 +348,6 @@ export class SharedReportComponent implements OnInit {
 
   isUserBlocked(username: string): boolean {
     return this.blockedUsers.has(username);
-  }
-
-  expandIssue(issue: any): void {
-    const index = this.expandedIssueNumbers.indexOf(issue.number);
-    if (index === -1) {
-      this.expandedIssueNumbers.push(issue.number);
-    } else {
-      this.expandedIssueNumbers.splice(index, 1);
-    }
   }
 
   secureMainBranch(): void {
@@ -431,7 +431,7 @@ export class SharedReportComponent implements OnInit {
           this.message.error('You need to be authenticated to perform this action. Please log in.');
           this.authService.login();
         } else {
-          this.message.info("Couldn't add templates. Check .github folder");
+          this.message.info("Couldn't add templates. Please .github folder for existing templates");
         }
         return throwError(() => error);
       })

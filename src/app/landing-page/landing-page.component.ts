@@ -1,3 +1,5 @@
+// landing-page.component.ts
+
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { IssuesService } from '../services/issues.service';
@@ -15,23 +17,25 @@ export class LandingPageComponent {
   user$: Observable<any>;
   isDarkMode = true;
 
+  login = () => this.authService.login();
+  logout = () => this.authService.logout();
+  fetchRepoData = () => this.processRepoUrl('/issues');
+  addRules = () => this.processRepoUrl('/rules', -1);
+
   constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService) {
     this.user$ = this.authService.getUser();
   }
 
-  login = () => this.authService.login();
-  logout = () => this.authService.logout();
-
-  fetchRepoData() {
+  private processRepoUrl(navigateTo: string, page: number = 1) {
     const repoPath = this.extractRepoPath(this.repoUrl);
     if (!repoPath) {
-      this.message.info("Please enter valid Github repository URL")
+      this.message.info("Please enter a valid Github repository URL");
       return;
     }
 
     const [owner, repo] = repoPath.split('/');
-    this.issuesService.fetchRepoData(owner, repo).subscribe(
-      repoData => this.router.navigate(['/issues']),
+    this.issuesService.fetchRepoData(owner, repo, page).subscribe(
+      repoData => this.router.navigate([navigateTo]),
       error => this.message.error('Error fetching repository data')
     );
   }
