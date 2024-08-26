@@ -62,7 +62,7 @@ export class SharedReportComponent implements OnInit {
         description: "Set up a rule to require 2 approvals for PRs", 
         icon: "team", 
         functionCall: () => this.requirePRApprovals(),
-        disabled: true,//this.repoData?.repoMetadata?.private || !this.isRepoOwner,
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner || this.repoData.repoMetadata.owner.type != 'Organization',
         loading: false
       },
       { 
@@ -431,7 +431,7 @@ export class SharedReportComponent implements OnInit {
           this.message.error('You need to be authenticated to perform this action. Please log in.');
           this.authService.login();
         } else {
-          this.message.info("Couldn't add templates. Check .github folder");
+          this.message.info("Couldn't add templates. Please .github folder for existing templates");
         }
         return throwError(() => error);
       })

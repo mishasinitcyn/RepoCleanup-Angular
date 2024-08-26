@@ -57,7 +57,7 @@ export class RulesComponent implements OnInit {
         description: "Set up a rule to require 2 approvals for PRs", 
         icon: "team", 
         functionCall: () => this.requirePRApprovals(),
-        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner,
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner || this.repoData.repoMetadata.owner.type != 'Organization',
         loading: false
       },
       { 
@@ -123,7 +123,7 @@ export class RulesComponent implements OnInit {
       },
       (error) => {
         if (action) action.loading = false;
-        this.message.error('Failed to add templates. Please try again.');
+        this.message.info("Couldn't add templates. Please check .github folder for existing templates");
       }
     );
   }
