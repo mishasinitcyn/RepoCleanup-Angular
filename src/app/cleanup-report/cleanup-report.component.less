@@ -1,73 +1,98 @@
 .cleanup-report {
-    h1 {
-      font-size: 24px;
-      margin-bottom: 24px;
-      color: #fff;
-    }
+  h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
+    color: #fff;
+  }
 
-    nz-card {
-      width: 100%;
-      margin-bottom: 24px;
-      // background-color: #1f1f1f;
-      background-color: #090909;
+  nz-card {
+    width: 100%;
+    margin-bottom: 24px;
+    // background-color: #1f1f1f;
+    background-color: #090909;
+    border-color: #303030;
+
+    ::ng-deep .ant-card-head {
       border-color: #303030;
-  
-      ::ng-deep .ant-card-head {
-        border-color: #303030;
+    }
+  }
+
+  .summary-card {
+    margin-bottom: 24px;
+
+    .spam-count {
+      font-size: 24px;
+      font-weight: bold;
+
+      .count {
+        color: #fff;
+      }
+
+      .total {
+        color: #8c8c8c;
+        font-size: 18px;
       }
     }
-  
-    .summary-card {
-      margin-bottom: 24px;
-  
-      .spam-count {
-        font-size: 24px;
-        font-weight: bold;
-  
-        .count {
+  }
+
+  .spam-issues-card,
+  .label-distribution-card {
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+
+    ::ng-deep {
+      .ant-card-head {
+        .ant-card-head-title {
           color: #fff;
         }
-  
-        .total {
-          color: #8c8c8c;
-          font-size: 18px;
-        }
-      }
-    }
-  
-    .spam-issues-card,
-    .label-distribution-card {
-        margin-bottom: 20px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-  
-      ::ng-deep {
-        .ant-card-head {
-          .ant-card-head-title {
-            color: #fff;
-          }
-        }
-      }
-    }
-  
-    .download-buttons {
-      display: flex;
-      justify-content: flex-start;
-  
-      button {
-        margin-right: 12px;
-        font-size: 12px;
-        height: 28px;
-        padding: 0 12px;
       }
     }
   }
 
+  .download-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  
+    button {
+      margin-right: 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      height: 28px;
+      padding: 0 12px;
+    }
+  }
+}
 
-  tr {
-    cursor: pointer;
+
+tr {
+  cursor: pointer;
+}
+
+.table-container {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+nz-table {
+  ::ng-deep {
+    .ant-table {
+      table {
+        width: 100%;
+        min-width: 800px; // Adjust this value based on your needs
+      }
+    }
   }
-  .issue-details {
-    background-color: #090909;
-  }
+}
+
+.issue-details {
+  background-color: #090909;
+  word-break: break-word;
+}
+
+nz-tag {
+  display: inline-block;
+  margin-bottom: 4px;
+}

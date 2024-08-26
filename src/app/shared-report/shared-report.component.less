@@ -21,7 +21,6 @@
   nz-card {
     width: 100%;
     margin-bottom: 24px;
-    // background-color: #1f1f1f;
     background-color: #090909;
     border-color: #303030;
 
@@ -30,17 +29,34 @@
     }
   }
 
-  .ant-table {
-    background-color: transparent;
-  }
-
   tr {
     cursor: pointer;
   }
 
+  .table-container {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  nz-table {
+    ::ng-deep {
+      .ant-table {
+        table {
+          width: 100%;
+          // min-width: 800px;
+        }
+      }
+    }
+  }
+
   .issue-details {
     background-color: #090909;
-    border: 1px solid #303030;
+    word-break: break-word;
+  }
+
+  nz-tag {
+    display: inline-block;
+    margin-bottom: 4px;
   }
 
   .download-buttons {

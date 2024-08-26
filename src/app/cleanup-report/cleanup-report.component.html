@@ -14,52 +14,8 @@
   </div>
 
   <nz-card nzTitle="Flagged Issues">
-    <nz-table [nzData]="spamIssues"
-  [nzFrontPagination]="true"
-  [nzShowPagination]="true"
-  [nzTotal]="repoData.issues.length"
-  [nzHideOnSinglePage]="false">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Number</th>
-      <th>Username</th>
-      <th>Labels</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-      <ng-container *ngFor="let issue of spamIssues">
-        <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)" (click)="expandIssue(issue)">
-          <td>{{ issue.title }}</td>
-          <td>{{ issue.number }}</td>
-          <td>{{ issue.user.login }}</td>
-          <td>
-            <nz-tag *ngFor="let label of issue.labels">
-              {{ label.name }}
-            </nz-tag>
-          </td>
-          <td>
-            <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue); $event.stopPropagation()">
-              <span nz-icon nzType="minus" nzTheme="outline"></span>
-            </button>
-          </td>
-        </tr>
-        <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
-          <td colspan="6" class="issue-details">
-            <div>
-              <p><strong>Body:</strong> {{ issue.body }}</p>
-              <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
-            </div>
-          </td>
-        </tr>
-      </ng-container>
-    </tbody>
-  </nz-table>
-  </nz-card>
-
-  <nz-card nzTitle="Closed Issues" *ngIf="closedIssues.length > 0">
-    <nz-table [nzData]="closedIssues">
+    <div class="table-container">
+      <nz-table [nzData]="spamIssues" nzShowPagination="false" [nzFrontPagination]="true" [nzShowPagination]="true" [nzTotal]="repoData.issues.length" [nzHideOnSinglePage]="false">
       <thead>
         <tr>
           <th>Title</th>
@@ -70,24 +26,24 @@
         </tr>
       </thead>
       <tbody>
-        <ng-container *ngFor="let issue of closedIssues">
-          <tr (click)="expandIssue(issue)">
+        <ng-container *ngFor="let issue of spamIssues">
+          <tr [class.expanded]="expandedIssueNumbers.includes(issue.number)" (click)="expandIssue(issue)">
             <td>{{ issue.title }}</td>
-            <td>#{{ issue.number }}</td>
+            <td>{{ issue.number }}</td>
             <td>{{ issue.user.login }}</td>
             <td>
-              <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+              <nz-tag *ngFor="let label of issue.labels">
                 {{ label.name }}
               </nz-tag>
             </td>
             <td>
-              <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove closed issue" (click)="removeClosedIssue(issue); $event.stopPropagation()">
+              <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove spam label" (click)="removeSpamLabel(issue); $event.stopPropagation()">
                 <span nz-icon nzType="minus" nzTheme="outline"></span>
               </button>
             </td>
           </tr>
           <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
-            <td colspan="5" class="issue-details">
+            <td colspan="6" class="issue-details">
               <div>
                 <p><strong>Body:</strong> {{ issue.body }}</p>
                 <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
@@ -96,7 +52,51 @@
           </tr>
         </ng-container>
       </tbody>
-    </nz-table>
+      </nz-table>
+    </div>
+  </nz-card>
+
+  <nz-card nzTitle="Closed Issues" *ngIf="closedIssues.length > 0">
+    <div class="table-container">
+      <nz-table [nzData]="closedIssues" nzShowPagination="false">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Number</th>
+            <th>Username</th>
+            <th>Labels</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let issue of closedIssues">
+            <tr (click)="expandIssue(issue)">
+              <td>{{ issue.title }}</td>
+              <td>#{{ issue.number }}</td>
+              <td>{{ issue.user.login }}</td>
+              <td>
+                <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+                  {{ label.name }}
+                </nz-tag>
+              </td>
+              <td>
+                <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Remove closed issue" (click)="removeClosedIssue(issue); $event.stopPropagation()">
+                  <span nz-icon nzType="minus" nzTheme="outline"></span>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="expandedIssueNumbers.includes(issue.number)">
+              <td colspan="5" class="issue-details">
+                <div>
+                  <p><strong>Body:</strong> {{ issue.body }}</p>
+                  <p><strong>Date:</strong> {{ issue.created_at | date }}</p>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </nz-table>
+    </div>
   </nz-card>
 
   <div class="download-buttons" *ngIf="repoData">
