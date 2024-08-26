@@ -45,7 +45,7 @@ export class IssuesComponent implements OnInit {
         this.applyExistingReportLabels();
         this.sortIssues();
       },
-      error => this.message.error('Error initializing data: ' + error.message)
+      error => this.message.error('Error initializing data')
     );
   }
   
@@ -87,7 +87,7 @@ export class IssuesComponent implements OnInit {
             this.applyExistingReportLabels();
             this.sortIssues();
           },
-          error => this.message.error('Error fetching page: ' + error.message)
+          error => this.message.error('Error fetching page')
         );
     }
   }

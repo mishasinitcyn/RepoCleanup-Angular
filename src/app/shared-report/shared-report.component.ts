@@ -93,7 +93,7 @@ export class SharedReportComponent implements OnInit {
         this.initializeRecommendedActions(); // Initialize actions after setting repoData
       })
     ).subscribe({
-      error: (error) => this.message.error('An error occurred while fetching the report data.')
+      // error: (error) => this.message.error('An error occurred while fetching the report data.')
     });
   }
 
@@ -126,7 +126,7 @@ export class SharedReportComponent implements OnInit {
       }),
       catchError(error => {
         if (error.message === 'No report found') {
-          this.message.error('No report found with the given ID.');
+          // this.message.error('No report found with the given ID.');
         } else {
           this.message.error('An error occurred while fetching the report data.');
         }

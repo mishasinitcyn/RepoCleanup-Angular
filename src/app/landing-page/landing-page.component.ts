@@ -36,7 +36,10 @@ export class LandingPageComponent {
     const [owner, repo] = repoPath.split('/');
     this.issuesService.fetchRepoData(owner, repo, page).subscribe(
       repoData => this.router.navigate([navigateTo]),
-      error => this.message.error('Error fetching repository data')
+      error => {
+        if (error.status == 404) this.message.info('Please log in to fetch private repository')
+        else this.message.error('Error fetching repository data')
+      }
     );
   }
 

@@ -1,5 +1,5 @@
 <app-layout>
-  <div class="shared-report" *ngIf="report">
+  <div class="shared-report" *ngIf="report else noReport">
     <ng-container *ngIf="report.isopen; else closedReport">
       <article nz-typography>
         <div class="repo-title">
@@ -143,3 +143,9 @@
     </nz-card>
   </div>
 </app-layout>
+
+<ng-template #noReport>
+  <article nz-typography style="width: 100%; margin: auto;">
+    <p nz-typography style="width: 100%; margin: auto; text-align: center;"> Report not found</p>
+  </article>
+</ng-template>
