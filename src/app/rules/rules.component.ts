@@ -53,19 +53,19 @@ export class RulesComponent implements OnInit {
         loading: false
       },
       { 
-        name: "Require PR Approvals", 
-        description: "Set up a rule to require 2 approvals for PRs", 
-        icon: "team", 
-        functionCall: () => this.requirePRApprovals(),
-        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner || this.repoData.repoMetadata.owner.type != 'Organization',
-        loading: false
-      },
-      { 
         name: "Add Templates", 
         description: "Create templates for Issues and Pull Requests", 
         icon: "file-text", 
         functionCall: () => this.addTemplates(),
         disabled: !this.isRepoOwner(),
+        loading: false
+      },
+      { 
+        name: "Require PR Approvals", 
+        description: "Set up a rule to require 2 approvals for PRs", 
+        icon: "team", 
+        functionCall: () => this.requirePRApprovals(),
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner || this.repoData.repoMetadata.owner.type != 'Organization',
         loading: false
       },
     ];
