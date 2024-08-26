@@ -5,6 +5,7 @@ export interface IssueLabel {
 
 export const SpamLabel = {
     name: "spam",
+    color: 'f5222d'
   };
 
 export interface User {

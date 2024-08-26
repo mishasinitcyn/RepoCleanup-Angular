@@ -26,7 +26,6 @@ export class IssuesComponent implements OnInit {
 
   hasSpamLabel = (issue: any): boolean => issue.labels.some((label: any) => label.name === 'spam');
   onTabChange = (event: any): void => this.selectedTabIndex = event.index;
-  getLabelColor = (label: string): string => colorMapping[label.toLowerCase()] || 'default';
 
   constructor(private issuesService: IssuesService, private reportService: ReportService, private authService: AuthService, private notification: NzNotificationService, private modal: NzModalService, private message: NzMessageService, private clipboard: Clipboard) {}
   

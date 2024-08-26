@@ -35,7 +35,7 @@
             <h1>{{ issue.title }}</h1>
             <markdown [data]="issue.body" class="markdown-content" style="margin-top: 10px;"></markdown>
             <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
-              <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+              <nz-tag *ngFor="let label of issue.labels" [nzColor]="'#'+label.color">
                 {{ label.name }}
               </nz-tag>
             </div>
