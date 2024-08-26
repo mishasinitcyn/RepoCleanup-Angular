@@ -42,34 +42,6 @@
     color: #333;
   }
 
-  .issues-page {
-    margin: 0;
-    margin-top: 50px;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    display: block;
-    padding: 20px;
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      z-index: -9;
-      height: 100%;
-      width: 100%;
-      background: linear-gradient(to right, #4f4f4f2e 1px, transparent 1px), linear-gradient(to bottom, #4f4f4f2e 1px, transparent 1px);
-      background-size: 14px 24px;
-      mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, #000 70%, transparent 110%);
-    }
-
-    .classification-summary-button {
-      margin-top: 20px;
-      text-align: center;
-    }
-  }
-
   nz-tag {
     margin-right: 8px;
     // background-color: rgba(0, 0, 0, 0.1);
@@ -78,6 +50,6 @@
   .pagination-container {
     display: flex;
     justify-content: center;
-    margin: 20px 0;
+    margin-bottom: 20px;
   }
 }
