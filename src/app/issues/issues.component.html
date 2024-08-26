@@ -33,7 +33,7 @@
           
           <nz-card *ngFor="let issue of repoData?.issues" [ngClass]="{'spam-issue': hasSpamLabel(issue)}" (click)="hasSpamLabel(issue) ? showSpamModal(issue, 'remove') : showSpamModal(issue, 'add')" style="margin-bottom: 20px;">
             <h1>{{ issue.title }}</h1>
-            <markdown [data]="issue.body" style="margin-top: 10px;"></markdown>
+            <markdown [data]="issue.body" class="markdown-content" style="margin-top: 10px;"></markdown>
             <div *ngIf="issue.labels && issue.labels.length > 0" style="margin-top: 10px;">
               <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
                 {{ label.name }}

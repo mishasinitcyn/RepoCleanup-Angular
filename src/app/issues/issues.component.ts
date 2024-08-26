@@ -76,32 +76,6 @@ export class IssuesComponent implements OnInit {
     return of(null);
   }
 
-  private fetchMissingIssues(report: any): Observable<any> {
-    if (!report || !this.repoData) return of(null);
-    const existingIssueNumbers = new Set(this.repoData.issues.map((issue: any) => issue.number));
-    const missingIssueNumbers = report.flaggedissues
-      .filter((issue: FlaggedIssue) => !existingIssueNumbers.has(issue.number))
-      .map((issue: FlaggedIssue) => issue.number);
-
-    if (missingIssueNumbers.length === 0) return of(null);
-
-    return this.issuesService.getIssuesByIssueNumbers(
-      this.repoData.repoMetadata.owner.login,
-      this.repoData.repoMetadata.name,
-      missingIssueNumbers
-    ).pipe(
-      tap(missingIssues => {
-        missingIssues.forEach((issue: any) => {
-          const flaggedIssue = report.flaggedissues.find((fi: FlaggedIssue) => fi.number === issue.number);
-          if (flaggedIssue) {
-            flaggedIssue.state = issue.state;
-          }
-          this.repoData.issues.push(issue);
-        });
-      })
-    );
-  }
-
   onPageChange(page: number): void {
     if (this.repoData) {
       const { repoMetadata } = this.repoData;
