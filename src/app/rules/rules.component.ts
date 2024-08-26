@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { IssuesService } from '../services/issues.service';
-import { RulesService } from '../services/rules.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { AuthService } from '../services/auth.service';
 import { RepoData } from '../core/interface';
+import { ActionsService } from '../services/actions.service';
 
 interface RecommendedAction {
   name: string;
@@ -25,7 +25,7 @@ export class RulesComponent implements OnInit {
   currentUser: any;
   recommendedActions: RecommendedAction[] = [];
 
-  constructor(private issuesService: IssuesService, private rulesService: RulesService, private authService: AuthService, private message: NzMessageService) {}
+  constructor(private issuesService: IssuesService, private actionsService: ActionsService, private authService: AuthService, private message: NzMessageService) {}
 
   ngOnInit(): void {
     this.issuesService.getRepoData().subscribe(repoData =>{
@@ -57,7 +57,7 @@ export class RulesComponent implements OnInit {
         description: "Set up a rule to require 2 approvals for PRs", 
         icon: "team", 
         functionCall: () => this.requirePRApprovals(),
-        disabled: true,//this.repoData?.repoMetadata?.private || !this.isRepoOwner,
+        disabled: this.repoData?.repoMetadata?.private || !this.isRepoOwner,
         loading: false
       },
       { 
@@ -78,7 +78,7 @@ export class RulesComponent implements OnInit {
     const owner = this.repoData.repoMetadata.owner.login;
     const repo = this.repoData.repoMetadata.name;
 
-    this.rulesService.secureMainBranch(owner, repo).subscribe(
+    this.actionsService.secureMainBranch(owner, repo).subscribe(
       () => {
         if (action) action.loading = false;
         this.message.success('Main branch secured successfully');
@@ -97,7 +97,7 @@ export class RulesComponent implements OnInit {
     const owner = this.repoData.repoMetadata.owner.login;
     const repo = this.repoData.repoMetadata.name;
 
-    this.rulesService.requirePRApprovals(owner, repo).subscribe(
+    this.actionsService.requirePRApprovals(owner, repo).subscribe(
       () => {
         if (action) action.loading = false;
         this.message.success('PR approval rule set successfully');
@@ -116,7 +116,7 @@ export class RulesComponent implements OnInit {
     const owner = this.repoData.repoMetadata.owner.login;
     const repo = this.repoData.repoMetadata.name;
 
-    this.rulesService.addTemplates(owner, repo).subscribe(
+    this.actionsService.addTemplates(owner, repo).subscribe(
       () => {
         if (action) action.loading = false;
         this.message.success('Templates added successfully');

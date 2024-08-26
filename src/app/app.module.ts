@@ -40,8 +40,8 @@ import { NzTypographyModule } from 'ng-zorro-antd/typography';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
-import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline, IssuesCloseOutline} from '@ant-design/icons-angular/icons';
-const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline, IssuesCloseOutline];
+import { GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline, IssuesCloseOutline, BranchesOutline} from '@ant-design/icons-angular/icons';
+const icons = [GithubOutline, RadarChartOutline, FileMarkdownOutline, DownloadOutline, MinusOutline, SaveOutline, UserDeleteOutline, CloseOutline, SafetyOutline, TeamOutline, FileTextOutline, SendOutline, IssuesCloseOutline, BranchesOutline];
 
 import { IssuesService } from './services/issues.service';
 import {MarkdownModule} from 'ngx-markdown'
