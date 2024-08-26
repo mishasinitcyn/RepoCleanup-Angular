@@ -22,7 +22,7 @@ export interface FlaggedIssue {
 export interface RepoData {
   repoMetadata: any;
   issues: any[];
-  pagination: Pagination;
+  pagination: Pagination | any;
 }
 
 export interface Pagination {

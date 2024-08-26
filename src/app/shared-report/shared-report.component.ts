@@ -293,6 +293,15 @@ export class SharedReportComponent implements OnInit {
     });
   }
 
+  expandIssue(issue: any): void {
+    const index = this.expandedIssueNumbers.indexOf(issue.number);
+    if (index === -1) {
+      this.expandedIssueNumbers.push(issue.number);
+    } else {
+      this.expandedIssueNumbers.splice(index, 1);
+    }
+  }
+  
   blockUser(issue: any): void {
     if (!this.isRepoOwner) {
       this.message.error('Only repository owners can block users.');
@@ -339,15 +348,6 @@ export class SharedReportComponent implements OnInit {
 
   isUserBlocked(username: string): boolean {
     return this.blockedUsers.has(username);
-  }
-
-  expandIssue(issue: any): void {
-    const index = this.expandedIssueNumbers.indexOf(issue.number);
-    if (index === -1) {
-      this.expandedIssueNumbers.push(issue.number);
-    } else {
-      this.expandedIssueNumbers.splice(index, 1);
-    }
   }
 
   secureMainBranch(): void {

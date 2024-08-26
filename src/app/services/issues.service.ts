@@ -42,6 +42,18 @@ export class IssuesService {
   }
 
   fetchRepoData(owner: string, repo: string, page: number = 1): Observable<RepoData> {
+    // If page is -1, we're just fetching metadata for rules
+    if (page === -1) {
+      return this.getRepoMetadata(owner, repo).pipe(
+        map(repoMetadata => ({
+          repoMetadata,
+          issues: [],
+          pagination: undefined
+        } as RepoData)),
+        tap(repoData => this.repoDataSubject.next(repoData))
+      );
+    }
+
     // Reset cache if we're fetching a new repo
     if (owner !== this.currentOwner || repo !== this.currentRepo) {
       this.cachedPages = {};

@@ -52,6 +52,7 @@ import { CleanupReportComponent } from './cleanup-report/cleanup-report.componen
 import { SharedReportComponent } from './shared-report/shared-report.component';
 import { HeaderComponent } from './assets/header/header.component';
 import { LayoutComponent } from './assets/layout/layout.component';
+import { RulesComponent } from './rules/rules.component';
 
 @NgModule({
   declarations: [
@@ -64,7 +65,8 @@ import { LayoutComponent } from './assets/layout/layout.component';
     CleanupReportComponent,
     SharedReportComponent,
     HeaderComponent,
-    LayoutComponent
+    LayoutComponent,
+    RulesComponent
   ],
   imports: [
     BrowserModule,
