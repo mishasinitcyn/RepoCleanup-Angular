@@ -25,19 +25,29 @@
               <input nz-input [(ngModel)]="repoUrl" placeholder="Enter your GitHub repository URL" />
               <div class="button-group">
                 <button nz-button nzType="primary" (click)="fetchRepoData()" style="background: rgb(255, 255, 255); border: none; color: rgb(41, 37, 36);">
-                  <!-- <i nz-icon nzType="branches" nzTheme="outline"></i> -->
                   Fetch Issues
                 </button>
                 <button nz-button nzType="default" (click)="addRules()"><i nz-icon nzType="safety" nzTheme="outline"></i>Add Rules</button>
               </div>
             </div>
           </nz-card>
-          <!-- <div class="or-add-rules">
-            <span nz-typography>or</span>
-            <button nz-button nzType="default" (click)="addRules()"><i nz-icon nzType="safety" nzTheme="outline"></i>Add Rules</button>
-          </div> -->
         </div>
       </div>
     </div>
   </div>
+  <p nz-typography class="learn-more-link" (click)="openLearnMoreModal($event)">Learn More</p>
 </div>
+
+<ng-template #learnMoreModal>
+  <div class="learn-more-content">
+    <!-- <h2 nz-typography>Learn more about RepoCleanup</h2> -->
+    <div class="resource-links">
+      <a nz-button nzType="link" href="https://www.youtube.com/watch?v=your_video_id" target="_blank">
+        <span nz-icon nzType="youtube" nzTheme="fill"></span>
+      </a>
+      <a nz-button nzType="link" href="https://medium.com/your-article-link" target="_blank">
+        <span nz-icon nzType="medium" nzTheme="outline"></span>
+      </a>
+    </div>
+  </div>
+</ng-template>

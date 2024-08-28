@@ -1,12 +1,13 @@
 // landing-page.component.ts
 
-import { Component } from '@angular/core';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { IssuesService } from '../services/issues.service';
 import { AuthService } from '../services/auth.service';
 import { Observable } from 'rxjs';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { DebounceService } from '../services/debounce.service';
+import { NzModalService } from 'ng-zorro-antd/modal';
 
 @Component({
   selector: 'app-landing-page',
@@ -14,6 +15,7 @@ import { DebounceService } from '../services/debounce.service';
   styleUrls: ['./landing-page.component.less']
 })
 export class LandingPageComponent {
+  @ViewChild('learnMoreModal') learnMoreModalTemplate!: TemplateRef<{}>;
   repoUrl: string = '';
   user$: Observable<any>;
   isDarkMode = true;
@@ -23,7 +25,7 @@ export class LandingPageComponent {
   fetchRepoData = () => this.debounceService.debounce(() => this.processRepoUrl('/issues'));
   addRules = () => this.debounceService.debounce(() => this.processRepoUrl('/rules', -1));
 
-  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService, private debounceService: DebounceService) {
+  constructor(private authService: AuthService, private router: Router, private issuesService: IssuesService, private message: NzMessageService, private debounceService: DebounceService, private modal: NzModalService) {
     this.user$ = this.authService.getUser();
   }
 
@@ -47,5 +49,22 @@ export class LandingPageComponent {
   private extractRepoPath(url: string): string | null {
     const match = url.match(/^https:\/\/github\.com\/([^\/]+\/[^\/]+)/);
     return match ? match[1] : null;
+  }
+
+  openLearnMoreModal(event: Event): void {
+    event.preventDefault();
+    this.modal.create({
+      nzTitle: "Learn more",
+      nzContent: this.learnMoreModalTemplate,
+      nzFooter: null,
+      // nzCloseIcon: undefined,
+      nzWidth: 400,
+      nzNoAnimation: true,
+      nzClassName: 'learn-more-modal',
+      nzBodyStyle: {
+        backgroundColor: 'black',
+        color: 'white'
+      },
+    });
   }
 }
