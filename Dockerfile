@@ -17,6 +17,7 @@ RUN npm install -g @angular/cli
 COPY . .
 
 # Define build arguments
+ARG CLIENT_URL
 ARG FAST_API_URL
 ARG API_URL
 ARG GITHUB_CLIENT_ID
@@ -30,7 +31,7 @@ ARG DB_PASSWORD
 
 # Create production environment file from template
 RUN cp src/environments/environment.prod.template.ts src/environments/environment.ts && \
-    sed -i 's|${FAST_API_URL}|'"$FAST_API_URL"'|g; s|${API_URL}|'"$API_URL"'|g; s|${GITHUB_CLIENT_ID}|'"$GITHUB_CLIENT_ID"'|g; s|${GITHUB_REDIRECT_URI}|'"$GITHUB_REDIRECT_URI"'|g; s|${GITHUB_CLIENT_SECRET}|'"$GITHUB_CLIENT_SECRET"'|g; s|${DB_HOST}|'"$DB_HOST"'|g; s|${DB_PORT}|'"$DB_PORT"'|g; s|${DB_NAME}|'"$DB_NAME"'|g; s|${DB_USER}|'"$DB_USER"'|g; s|${DB_PASSWORD}|'"$DB_PASSWORD"'|g;' src/environments/environment.ts
+    sed -i 's|${CLIENT_URL}|'"$CLIENT_URL"'|g; s|${FAST_API_URL}|'"$FAST_API_URL"'|g; s|${API_URL}|'"$API_URL"'|g; s|${GITHUB_CLIENT_ID}|'"$GITHUB_CLIENT_ID"'|g; s|${GITHUB_REDIRECT_URI}|'"$GITHUB_REDIRECT_URI"'|g; s|${GITHUB_CLIENT_SECRET}|'"$GITHUB_CLIENT_SECRET"'|g; s|${DB_HOST}|'"$DB_HOST"'|g; s|${DB_PORT}|'"$DB_PORT"'|g; s|${DB_NAME}|'"$DB_NAME"'|g; s|${DB_USER}|'"$DB_USER"'|g; s|${DB_PASSWORD}|'"$DB_PASSWORD"'|g;' src/environments/environment.ts
 
 RUN echo "Contents of environment.ts:" && cat src/environments/environment.ts
 

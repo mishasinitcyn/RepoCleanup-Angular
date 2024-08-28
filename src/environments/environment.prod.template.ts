@@ -1,4 +1,5 @@
 export const environment = {
+    clientUrl: '${CLIENT_URL',
     fastApiUrl: '${FAST_API_URL}',
     apiUrl: '${API_URL}',
     production: true,

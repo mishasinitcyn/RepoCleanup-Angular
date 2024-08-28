@@ -15,7 +15,7 @@
 
   <nz-card nzTitle="Flagged Issues">
     <div class="table-container">
-      <nz-table [nzData]="spamIssues" nzShowPagination="false" [nzFrontPagination]="true" [nzShowPagination]="true" [nzTotal]="repoData.issues.length" [nzHideOnSinglePage]="false">
+      <nz-table [nzData]="spamIssues" [nzShowPagination]="false" [nzTotal]="repoData.issues.length" [nzHideOnSinglePage]="false">
       <thead>
         <tr>
           <th>Title</th>
@@ -32,7 +32,7 @@
             <td>{{ issue.number }}</td>
             <td>{{ issue.user.login }}</td>
             <td>
-              <nz-tag *ngFor="let label of issue.labels">
+              <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.color">
                 {{ label.name }}
               </nz-tag>
             </td>
@@ -58,7 +58,7 @@
 
   <nz-card nzTitle="Closed Issues" *ngIf="closedIssues.length > 0">
     <div class="table-container">
-      <nz-table [nzData]="closedIssues" nzShowPagination="false">
+      <nz-table [nzData]="closedIssues" [nzShowPagination]="false">
         <thead>
           <tr>
             <th>Title</th>
@@ -75,7 +75,7 @@
               <td>#{{ issue.number }}</td>
               <td>{{ issue.user.login }}</td>
               <td>
-                <nz-tag *ngFor="let label of issue.labels" [nzColor]="getLabelColor(label.name)">
+                <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.color">
                   {{ label.name }}
                 </nz-tag>
               </td>

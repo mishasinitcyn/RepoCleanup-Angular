@@ -1,6 +1,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { CommonEngine } from '@angular/ssr';
 import express from 'express';
+import cors from 'cors';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { environment } from './src/environments/environment';
@@ -25,6 +26,13 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
   server.use(express.json());
+
+  // CORS
+  const corsOptions = {
+    origin: environment.clientUrl,
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  };
+  server.use(cors(corsOptions));
 
   // Use routers
   server.use('/api/github', githubRouter);

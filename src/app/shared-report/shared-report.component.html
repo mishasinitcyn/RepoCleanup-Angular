@@ -34,7 +34,7 @@
                     <td>#{{ issue.number }}</td>
                     <td>{{ issue.user.login }}</td>
                     <td>
-                      <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.name === 'spam' ? 'red' : 'black'">{{ label.name }}</nz-tag>
+                      <nz-tag *ngFor="let label of issue.labels" [nzColor]="'#'+label.color">{{ label.name }}</nz-tag>
                     </td>
                     <td>
                       <button nz-button nzType="text" nz-tooltip nzTooltipTitle="Unflag issue" (click)="unflagIssue(issue)" [disabled]="issue.status=='closed' || !hasEditPermission()">
@@ -89,7 +89,7 @@
                   <td>#{{ issue.number }}</td>
                   <td>{{ issue.user.login }}</td>
                   <td>
-                    <nz-tag *ngFor="let label of issue.labels" [nzColor]="label.name === 'spam' ? 'red' : 'white'">{{ label.name }}</nz-tag>
+                    <nz-tag *ngFor="let label of issue.labels" [nzColor]="'#'+label.color">{{ label.name }}</nz-tag>
                   </td>
                 </tr>
                 <tr *ngIf="expandedIssueNumbers.includes(issue.number)">

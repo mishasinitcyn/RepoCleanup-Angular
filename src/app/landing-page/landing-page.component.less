@@ -69,6 +69,81 @@
       display: block;
     }
   }
+
+  .learn-more-link {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #6b7280; // Tailwind's text-muted-foreground
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+      color: #ffffff;
+      // text-decoration: underline;
+    }
+  }
+}
+
+.learn-more-content {
+  padding: 0px;
+  text-align: center;
+  border-radius: 0;
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0px;
+  }
+
+  .resource-links {
+    display: flex;
+    justify-content: center;
+    gap: 0px;
+
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      transition: background-color 0.3s ease;
+
+      span[nz-icon] {
+        font-size: 32px;
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+// Style the modal (optional, adjust as needed)
+::ng-deep .learn-more-modal {
+  .ant-modal-header {
+    background-color: black;
+    color: #ffffff;
+    border: none;
+  }
+
+  .ant-modal-body {
+    padding: 0px;
+  }
+
+  .ant-typography {
+    color: #ffffff;
+  }
+
+  .ant-btn-link {
+    padding: 0;
+    border: none;
+    
+    &:hover,
+    &:focus {
+      background: none;
+    }
+  }
 }
 
 .hero-section {
