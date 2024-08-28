@@ -1,14 +1,14 @@
 # RepoCleanup
-Decluttering repositories
+<p float="left">
+  <a href='https://www.youtube.com/watch?v=yNBtKRospZs&t=2s'><img src='https://github.com/user-attachments/assets/aebf62c8-2f4d-4ba8-a210-e92a1379281a' width=40px></a>
+  <a href='https://medium.com/@msa242/repocleanup-d54c50d79b99'><img src='https://www.svgrepo.com/show/394277/medium.svg' width=40px></a>
+</p>
 
 ## What is RepoCleanup?
 RepoCleanup is an open-source Github administration platform that allows developers to remove spam issues/pull-requests from repositories, and add repository rules.
 
 ## What problem does it solve?
 Popular open-source projects on GitHub are polluted with spam issues submitted by users farming for engagement. Even helpful issues are often posted without a relevant tag/label like "bug", "feature", "discussion", etc.
-
-## Demo
-
 
 # Implementation
 RepoCleanup is implemented on top of my PECAN template (Postgres, Express, Coolify, Angular, Node). It comes configured with all the files necessary for deployment and local development, including Dockerfile, docker-compose, dockerignore, environment files, Express server, Postgres database, and UI library.
