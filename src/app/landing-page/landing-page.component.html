@@ -5,7 +5,7 @@
   <ng-container *ngIf="user$ | async as user; else githubIcon">
     <img [src]="user.avatar_url" alt="User Avatar" class="user-avatar">
   </ng-container>
-  <div class="svg-container">
+  <div class="svg-container" (click)="openLearnMoreModal($event)">
     <img src="assets/icon.svg" alt="Repo Cleanup Icon" class="repo-cleanup-icon"/>
   </div>
   <div class="hero-section">
